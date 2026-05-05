@@ -1,0 +1,123 @@
+# Fill in this file according to the instructions in the README.md
+
+apiVersion: apps/v1 # defines version of kubernetes api version being used
+kind: Deployment
+metadata:
+  name: mosquitto-broker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mosquitto # pods with this label will used this deployment
+  template:
+    metadata:
+      labels:
+        app: mosquitto # all pods in this deployment will have use this label
+    spec:
+      containers: # containers within the pod
+        - name: mosquitto
+          image: eclipse-mosquitto:latest
+          ports:
+            - containerPort: 1883
+            - containerPort: 8883
+          resources:
+            limits:
+              cpu: "2000m"
+              memory: "500Mi"
+            requests:
+              cpu: "500m"
+              memory: "128Mi"
+          volumeMounts: # link to configmap / secret, and set the paths
+            - name: mosquitto-conf
+              mountPath: /mosquitto/config
+            - name: certs
+              mountPath: /mosquitto/config/certs
+        - name: vnstat
+          image: vergoh/vnstat:latest
+          volumeMounts:
+            - name: net-out
+              mountPath: /metrics
+          volumeMounts:
+            - name: certs
+              mountPath: /etc/mqtt/certs
+              readOnly: true
+          env:
+            - name: IFACE
+              value: "eth0"
+          command:
+            - sh
+            - -c
+            - |
+              echo "timestamp,rx_kbit_s,tx_kbit_s" > /metrics/vnstat.csv
+
+              while true; do
+                # 1-second measurement window; prints avg rates for that second
+                json=$(vnstat -tr 1 -i "$IFACE" --json)
+
+                ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+                # extract the first "rx" value from JSON by stripping everything except numbers
+                rx=$(echo "$json" | awk -F'[,:}]' '/"rx":/ {gsub(/[^0-9.]/,"",$3); print $3; exit}')
+
+                # extract the first "tx" value from JSON by stripping everything except numbers
+                tx=$(echo "$json" | awk -F'[,:}]' '/"tx":/ {gsub(/[^0-9.]/,"",$3); print $3; exit}')
+
+                # write data row to CSV, insert 0 if extract failed
+                printf "%s,%s,%s\n" "$ts" "${rx:-0}" "${tx:-0}" >> /metrics/vnstat.csv
+              done
+      volumes: # definition for volumes used for the pod
+        - name: mosquitto-conf
+          configMap:
+            name: mosquitto-conf
+        - name: certs
+          secret:
+            secretName: certs
+        - name: net-out
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mosquitto-service
+spec:
+  type: LoadBalancer
+  allocateLoadBalancerNodePorts: false
+  selector:
+    app: mosquitto # link service to all pods
+  ports:
+    - name: mqtt
+      protocol: TCP
+      port: 30685
+      targetPort: 8883
+    - name: iperf3-tcp # open port for iperf3 server inside same pod
+      protocol: TCP
+      port: 30686
+      targetPort: 5201
+
+---
+apiVersion: v1
+kind: ConfigMap # map mosquitto.conf to the pods
+metadata:
+  name: mosquitto-conf
+data:
+  mosquitto.conf: |
+    allow_anonymous true
+
+    listener 1883
+    protocol mqtt
+
+    listener 8883
+    protocol mqtt
+
+    cafile /mosquitto/config/certs/ca.crt
+    certfile /mosquitto/config/certs/server.crt
+    keyfile /mosquitto/config/certs/server.key
+
+    log_dest stdout
+    log_type all
+    connection_messages true
+    log_timestamp true
+
+    max_inflight_messages 100
+
+---

@@ -1,0 +1,9 @@
+FROM python:3.12-alpine
+
+WORKDIR /app
+COPY clock_offset_calculator/offset_calc.py clock_offset_calculator/requirements.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt
+
+VOLUME [ "/app/certs" ]
+
+CMD ["python", "offset_calc.py"]

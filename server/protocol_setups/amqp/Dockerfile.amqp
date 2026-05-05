@@ -1,0 +1,10 @@
+FROM python:3.12-alpine
+
+WORKDIR /app
+COPY amqp/amqp_logger.py amqp/amqp_requirements.txt /app/
+COPY influx_writer.py /app/
+RUN pip install --no-cache-dir -r amqp_requirements.txt
+
+VOLUME [ "/app/certs" ]
+
+CMD ["python", "amqp_logger.py"]

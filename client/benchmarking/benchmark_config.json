@@ -1,0 +1,57 @@
+{
+  "can": {
+    "interface": "socketcan",
+    "channel": "can0",
+    "delay": 0,
+    "database": "PATH_TO_DBC_FILE_HERE",
+    "filter_set": []
+  },
+  "simulation": {
+    "interface": "file",
+    "channel": "PATH_TO_CAN_JSON_DATA_HERE",
+    "delay": 0,
+    "database": ""
+  },
+  "client_settings": {
+    "server_address": "SERVER_IP_ADDRESS_HERE",
+    "certs_path": "certs/ca.crt",
+    "server_port": 30685,
+    "iperf_port": 30686,
+    "clock_offset_address": "http://ADDRESS_HERE:30685",
+    "topic": "toyota",
+    "window": 100,
+    "workers": 100,
+    "queue_maxsize": 1000000,
+    "duration": 60,
+    "path": "",
+    "timeout": 10
+  },
+  "server_settings": {
+    "rahti_project": "RAHTI_NAMESPACE_HERE",
+    "broker_cpu_limit": "1500m",
+    "broker_cpu_requests": "500m",
+    "broker_memory_limit": "1500Mi",
+    "broker_memory_requests": "1000Mi",
+    "logger_cpu_limit": "3000m",
+    "logger_cpu_requests": "1000m",
+    "logger_memory_limit": "6000Mi",
+    "logger_memory_requests": "2000Mi",
+    "server_cpu_limit": "4000m",
+    "server_cpu_requests": "1500m",
+    "server_memory_limit": "7500Mi",
+    "server_memory_requests": "3000Mi"
+  },
+  "yaml_paths": {
+    "coap": ["server/protocol_setups/coap/coap.yaml"],
+    "mqtt": [
+      "server/protocol_setups/mqtt/mosquitto.yaml",
+      "server/protocol_setups/mqtt/logger.yaml"
+    ],
+    "amqp": [
+      "server/protocol_setups/amqp/amqp_broker.yaml",
+      "server/protocol_setups/amqp/amqp_logger.yaml"
+    ],
+    "http2": ["server/protocol_setups/https/https.yaml"],
+    "http3": ["server/protocol_setups/https3/https.yaml"]
+  }
+}

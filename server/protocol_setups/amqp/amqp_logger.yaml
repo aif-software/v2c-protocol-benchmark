@@ -1,0 +1,50 @@
+# Deployment for the data logger python script
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: amqp-logger
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: amqp-logger
+  template:
+    metadata:
+      labels:
+        app: amqp-logger
+    spec:
+      containers:
+        - name: amqp-logger
+          image: SPECIFY IMAGE HERE
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5672
+            - containerPort: 5671
+          resources:
+            limits:
+              cpu: "3000m"
+              memory: "6000Mi"
+            requests:
+              cpu: "1000m"
+              memory: "2000Mi"
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secrets
+          env: # environment variables for the container
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: CERTS_PATH
+              value: "/certs/ca.crt"
+            - name: QOS_LEVEL
+              value: "0"
+          volumeMounts:
+            - name: logger-certs
+              mountPath: /certs
+      volumes:
+        - name: logger-certs
+          secret:
+            secretName: certs
+
+---

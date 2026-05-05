@@ -1,0 +1,8 @@
+fastapi
+httpx
+can
+influxdb-client
+uvicorn
+pyyaml==5.3.1
+python-dotenv==1.0.0
+h2

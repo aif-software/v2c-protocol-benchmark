@@ -1,0 +1,118 @@
+# Fill in this file according to the instructions in the README.md
+
+apiVersion: apps/v1 # defines version of kubernetes api version being used
+kind: Deployment
+metadata:
+  name: rabbitmq-broker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq # pods with this label will used this deployment
+  template:
+    metadata:
+      labels:
+        app: rabbitmq # all pods in this deployment will have use this label
+    spec:
+      containers: # containers within the pod
+        - name: rabbitmq
+          image: rabbitmq:latest
+          envFrom:
+            - secretRef:
+                name: app-secrets
+          ports:
+            - containerPort: 5672 # amqp
+            - containerPort: 5671 # amqps (tls)
+          resources:
+            limits:
+              cpu: "1500m"
+              memory: "1500Mi"
+            requests:
+              cpu: "500m"
+              memory: "128Mi"
+          volumeMounts: # link to configmap / secret, and set the paths
+            - name: rabbitmq-config
+              mountPath: /etc/rabbitmq
+            - name: certs
+              mountPath: /etc/rabbitmq/certs
+              readOnly: true
+
+        - name: vnstat
+          image: vergoh/vnstat:latest
+          volumeMounts:
+            - name: net-out
+              mountPath: /metrics
+          env:
+            - name: IFACE
+              value: "eth0"
+          command:
+            - sh
+            - -c
+            - |
+              echo "timestamp,rx_kbit_s,tx_kbit_s" > /metrics/vnstat.csv
+
+              while true; do
+                # 1-second measurement window; prints avg rates for that second
+                json=$(vnstat -tr 1 -i "$IFACE" --json)
+
+                ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+                # extract the first "rx" value from JSON by stripping everything except numbers
+                rx=$(echo "$json" | awk -F'[,:}]' '/"rx":/ {gsub(/[^0-9.]/,"",$3); print $3; exit}')
+
+                # extract the first "tx" value from JSON by stripping everything except numbers
+                tx=$(echo "$json" | awk -F'[,:}]' '/"tx":/ {gsub(/[^0-9.]/,"",$3); print $3; exit}')
+
+                # write data row to CSV, insert 0 if extract failed
+                printf "%s,%s,%s\n" "$ts" "${rx:-0}" "${tx:-0}" >> /metrics/vnstat.csv
+              done
+
+      volumes:
+        - name: rabbitmq-config
+          configMap:
+            name: rabbitmq-config
+        - name: certs
+          secret:
+            secretName: certs
+        - name: net-out
+          emptyDir: {}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-service
+spec:
+  type: LoadBalancer
+  allocateLoadBalancerNodePorts: false
+  selector:
+    app: rabbitmq # link service to all pods
+  ports:
+    - name: port1-tls
+      protocol: TCP
+      port: 30685
+      targetPort: 5671
+    - name: iperf3-tcp # open port for iperf3 server inside same pod
+      protocol: TCP
+      port: 30686
+      targetPort: 5201
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rabbitmq-config
+data:
+  rabbitmq.conf: |
+    listeners.ssl.default = 5671
+    ssl_options.cacertfile = /etc/rabbitmq/certs/ca.crt
+    ssl_options.certfile   = /etc/rabbitmq/certs/server.crt
+    ssl_options.keyfile    = /etc/rabbitmq/certs/server.key
+    ssl_options.verify = verify_peer
+    ssl_options.fail_if_no_peer_cert = false
+  
+  enabled_plugins: |
+    [rabbitmq_management].
+---

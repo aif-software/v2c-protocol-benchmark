@@ -1,0 +1,113 @@
+# Deployment for the data logger python script
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coap-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coap-server
+  template:
+    metadata:
+      labels:
+        app: coap-server
+    spec:
+      containers:
+        - name: coap-server
+          image: SPECIFY_IMAGE_HERE
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5684
+            - containerPort: 5683
+          resources:
+            limits:
+              cpu: "4000m"
+              memory: "6000Mi"
+            requests:
+              cpu: "1000m"
+              memory: "3000Mi"
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secrets
+          env: # environment variables for the container
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: "TSDB_BUCKET"
+              value: "coap_bucket0"
+            - name: QOS_LEVEL
+              value: "0"
+            - name: "LOG_FILE_PATH"
+              value: "/tmp/log.txt"
+            - name: "AIOCOAP_DTLSSERVER_ENABLED"
+              value: "1"
+            - name: "AIOCOAP_SERVER_TRANSPORT"
+              value: "tinydtls_server"
+            - name: COAPS_BIND_ADDR
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: "QOS_LEVEL"
+              value: "0"
+        - name: vnstat
+          image: vergoh/vnstat:latest
+          volumeMounts:
+            - name: net-out
+              mountPath: /metrics
+          env:
+            - name: IFACE
+              value: "eth0"
+          command:
+            - sh
+            - -c
+            - |
+              echo "timestamp,rx_kbit_s,tx_kbit_s" > /metrics/vnstat.csv
+
+              while true; do
+                # 1-second measurement window; prints avg rates for that second
+                json=$(vnstat -tr 1 -i "$IFACE" --json)
+
+                ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+                # extract the first "rx" value from JSON by stripping everything except numbers
+                rx=$(echo "$json" | awk -F'[,:}]' '/"rx":/ {gsub(/[^0-9.]/,"",$3); print $3; exit}')
+
+                # extract the first "tx" value from JSON by stripping everything except numbers
+                tx=$(echo "$json" | awk -F'[,:}]' '/"tx":/ {gsub(/[^0-9.]/,"",$3); print $3; exit}')
+
+                # write data row to CSV, insert 0 if extract failed
+                printf "%s,%s,%s\n" "$ts" "${rx:-0}" "${tx:-0}" >> /metrics/vnstat.csv
+              done
+      volumes:
+        - name: net-out
+          emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: coap-service
+  namespace: MODIFY_RAHTI_NAMESPACE_HERE
+spec:
+  ports:
+    - name: coaps-udp # dtls
+      protocol: UDP
+      port: 30685
+      targetPort: 5684
+    - name: coap-udp
+      protocol: UDP
+      port: 30684
+      targetPort: 5683
+    - name: iperf3-tcp # open port for iperf3 server inside same pod
+      protocol: TCP
+      port: 30686
+      targetPort: 5201
+  allocateLoadBalancerNodePorts: false
+  type: LoadBalancer
+  selector:
+    app: coap-server # link service to all pods
+
+---
+

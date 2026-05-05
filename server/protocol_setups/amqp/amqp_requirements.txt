@@ -1,0 +1,4 @@
+aio-pika==9.5.7
+influxdb-client==1.37.0
+python-dotenv==1.0.0
+pyyaml==5.3.1

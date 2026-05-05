@@ -1,0 +1,53 @@
+# Deployment for the data logger python script
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mqttlogger
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mqttlogger
+  template:
+    metadata:
+      labels:
+        app: mqttlogger
+    spec:
+      containers:
+        - name: mqttlogger
+          image: SPECIFY_IMAGE_HERE
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 1883
+            - containerPort: 8883
+          resources:
+            limits:
+              cpu: "2000m"
+              memory: "500Mi"
+            requests:
+              cpu: "500m"
+              memory: "128Mi"
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secrets
+          env: # environment variables for the container
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: CERT_PATH
+              value: "/certs"
+            - name: QOS_LEVEL
+              value: "0"
+            - name: TSDB_BUCKET
+              value: "mqtt_bucket0"
+
+          volumeMounts:
+            - name: logger-certs
+              mountPath: /certs
+      volumes:
+        - name: logger-certs
+          secret:
+            secretName: certs
+
+---

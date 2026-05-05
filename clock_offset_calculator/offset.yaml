@@ -1,0 +1,48 @@
+# Deployment for the data logger python script
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: offset-calculator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: offset-calculator
+  template:
+    metadata:
+      labels:
+        app: offset-calculator
+    spec:
+      containers:
+        - name: offset-calculator
+          image: image-registry.openshift-image-registry.svc:5000/kuura-benchmarking/offset-calc:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "500Mi"
+            requests:
+              cpu: "100m"
+              memory: "100Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: offset-calculator-service
+  namespace: kuura-benchmarking
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 30685
+      targetPort: 8000
+
+  allocateLoadBalancerNodePorts: false
+  type: LoadBalancer
+  selector:
+    app: offset-calculator # link service to all pods
+
+---
+

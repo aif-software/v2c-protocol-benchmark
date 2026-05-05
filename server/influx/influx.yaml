@@ -1,0 +1,95 @@
+---
+
+# InfluxDB deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: influxdb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: influxdb
+  template:
+    metadata:
+      labels:
+        app: influxdb
+    spec:
+      containers:
+        - name: influxdb-container
+          image: influxdb:latest
+          ports:
+            - containerPort: 8086
+          volumeMounts:
+            - mountPath: /tmp/influxdb
+              name: influxdb-pv
+          resources:
+            limits:
+              cpu: "2000m"
+              memory: "2500Mi"
+            requests:
+              cpu: "500m"
+              memory: "256Mi"
+          env:
+            - name: INFLUXD_BOLT_PATH
+              value: "/tmp/influxdb/influxd.bolt"
+            - name: INFLUXD_ENGINE_PATH
+              value: "/tmp/influxdb/engine"
+            - name: INFLUXD_CONFIG_PATH
+              value: "/tmp/influxdb/config"
+      volumes:
+        - name: influxdb-pv
+          persistentVolumeClaim:
+            claimName: influxdb-pvc
+---
+# Influx credentials & data is saved in a persistent volume
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: influxdb-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 6Gi
+
+---
+# Basic service for influxDB
+apiVersion: v1
+kind: Service
+metadata:
+  name: influxdb
+  labels:
+    app: influxdb
+spec:
+  selector:
+    app: influxdb
+  type: ClusterIP
+  ports:
+    - protocol: TCP
+      port: 8086
+      targetPort: 8086
+
+---
+
+
+# Basic route for influxDB
+apiVersion: route.openshift.io/v1 # have to use this route for rahti specifically
+kind: Route
+metadata:
+  name: influx-route
+  labels:
+    app: influxdb # map this route to all pods
+spec:
+  host: INFLUX_URL_HERE
+  to:
+    kind: Service
+    name: influxdb
+  port:
+    targetPort: 8086 # route from 443 to 8086
+  tls:
+    termination: edge
+
+
+---
