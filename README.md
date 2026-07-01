@@ -27,31 +27,7 @@ You should now be authorized and can proceed with setting up the project.
 
 This project relies on a number of configuration values that must be provided before use.
 
-#### Client-side
-
-##### 1. Dependencies and environment
-- Create and activate a new venv
-- Install the dependencies by running 
-  ```bash
-  pip install -r client/can_feeder/setup_scripts/requirements.txt
-  ```
-
-##### 2. Setup the client config at [client/benchmarking/benchmark_config.json](client/benchmarking/benchmark_config.json)
-
-##### 3. Generate the required self-signed certificates for the protocols by running:
-  ```bash
-  ( cd certs && ./generate_certs.sh )
-```
-
-
-
-##### 4. Push the certs and other secretive data as Secrets to the cloud to be used by the server-side components in Rahti by running:
-  ```bash
-  oc create secret generic certs   --from-file=ca.crt=certs/ca.crt   --from-file=server.crt=certs/server.crt   --from-file=server.key=certs/server.key   --dry-run=client -o yaml | oc apply -f - 
-  ```
-
-
-### Server-side setup
+#### Server-side setup
 
 ##### 1. Setup InfluxDB
 - In InfluxDB [Deployment file](server/influx/influx.yaml), set the URL's value in the influx-route host value, as well as the port values
@@ -90,6 +66,29 @@ oc create configmap app-config --from-env-file=config.env --dry-run=client -o ya
   - image
   - port values (Deployment & Service)
   - Namespace
+
+#### Client-side
+
+##### 1. Dependencies and environment
+- Create and activate a new venv
+- Install the dependencies by running 
+  ```bash
+  pip install -r client/can_feeder/setup_scripts/requirements.txt
+  ```
+
+##### 2. Setup the client config at [client/benchmarking/benchmark_config.json](client/benchmarking/benchmark_config.json)
+
+##### 3. Generate the required self-signed certificates for the protocols by running:
+  ```bash
+  ( cd certs && ./generate_certs.sh )
+```
+
+
+
+##### 4. Push the certs and other secretive data as Secrets to the cloud to be used by the server-side components in Rahti by running:
+  ```bash
+  oc create secret generic certs   --from-file=ca.crt=certs/ca.crt   --from-file=server.crt=certs/server.crt   --from-file=server.key=certs/server.key   --dry-run=client -o yaml | oc apply -f - 
+  ```
 
 ## Usage
 
