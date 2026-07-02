@@ -7,7 +7,6 @@ from influxdb_client import InfluxDBClient
 from time import time_ns
 from influx_writer import LoggerContext, store_message, INFLUX_OPTIONS
 
-
 urllib3.disable_warnings(
     urllib3.exceptions.InsecureRequestWarning
 )  # TEMPORARY DISABLE WARNINGS
@@ -25,8 +24,8 @@ try:
     _BROKER_PORT = os.environ["BROKER_PORT"]
     _CERT_PATH = os.environ["CERT_PATH"]
     _CLIENT_ID = os.environ["CLIENT_ID"]
-    _CLIENT_USERNAME = os.environ["CLIENT_USERNAME"]
-    _CLIENT_PASSWORD = os.environ["CLIENT_PASSWORD"]
+    _CLIENT_USERNAME = os.environ["MQTT_USERNAME"]
+    _CLIENT_PASSWORD = os.environ["MQTT_PASSWORD"]
     _LOG_FILE_PATH = os.environ["LOG_FILE_PATH"]
     _LOGGING_LEVEL_STRING = os.environ["LOG_LEVEL"]
     _TSDB_URL = os.environ["TSDB_URL"]
