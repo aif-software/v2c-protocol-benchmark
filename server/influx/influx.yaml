@@ -82,7 +82,7 @@ metadata:
   labels:
     app: influxdb # map this route to all pods
 spec:
-  host: INFLUX_URL_HERE
+  host: influxdb.measurements.rahtiapp.fi
   to:
     kind: Service
     name: influxdb
