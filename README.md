@@ -44,7 +44,37 @@ oc create -f clock_offset_calculator/offset.yaml
   ```
 
 ##### 3. Protocol setups
-- Set the environmental variables in [config.env](config.env) and [secrets.env](secrets.env)
+- Create files config.env and secrets.env. Fill the files with the variables shown below.
+```
+# config.env
+
+CERT_PATH=/certs
+CLIENT_ID=
+LOG_FILE_PATH=/tmp/log.txt
+LOG_LEVEL=WARNING
+TSDB_URL=
+TSDB_PORT=443
+TSDB_PROTOCOL=https
+TSDB_ORG=
+WORKER_COUNT=10
+BROKER_IP=
+BROKER_PORT=30685
+```
+
+```
+# secrets.env
+
+CLIENT_USERNAME=
+CLIENT_PASSWORD=
+COAPS_PSK_KEY=16 char identifier
+COAPS_PSK_IDENTITY=
+RABBITMQ_DEFAULT_USER=
+RABBITMQ_DEFAULT_PASS=
+TSDB_USERNAME=
+TSDB_PASSWORD=
+TSDB_TOKEN=
+```
+
   - The username and passwords can be defined as anything. For the TSDB_TOKEN, an API Token with read-buckets permission is required. The instructions for fetching it is found at https://docs.influxdata.com/influxdb/v2/admin/tokens/create-token/
 
 
