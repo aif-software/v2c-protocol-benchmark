@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: coap-server
-          image: SPECIFY_IMAGE_HERE
+          image: image-registry.apps.2.rahti.csc.fi/protocol-measurements/coap-server:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 5684
@@ -89,7 +89,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: coap-service
-  namespace: MODIFY_RAHTI_NAMESPACE_HERE
+  namespace: protocol-measurements
 spec:
   ports:
     - name: coaps-udp # dtls

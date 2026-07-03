@@ -27,7 +27,7 @@
     "timeout": 10
   },
   "server_settings": {
-    "rahti_project": "RAHTI_NAMESPACE_HERE",
+    "rahti_project": "protocol-measurements",
     "broker_cpu_limit": "1500m",
     "broker_cpu_requests": "500m",
     "broker_memory_limit": "1500Mi",

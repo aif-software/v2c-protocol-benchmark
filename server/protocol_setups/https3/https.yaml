@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: https3-server
-          image: SPECIFY_IMAGE_HERE
+          image: image-registry.apps.2.rahti.csc.fi/protocol-measurements/https3-server:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 4433
@@ -83,7 +83,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: https3-service
-  namespace: MODIFY_RAHTI_NAMESPACE_HERE
+  namespace: protocol-measurements
 spec:
   ports:
     - name: http

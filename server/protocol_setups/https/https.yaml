@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: https-server
-          image: SPECIFY_IMAGE_HERE
+          image: image-registry.apps.2.rahti.csc.fi/protocol-measurements/https-server:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
@@ -85,7 +85,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: https-service
-  namespace: MODIFY_RAHTI_NAMESPACE_HERE
+  namespace: protocol-measurements
 spec:
   ports:
     - name: http

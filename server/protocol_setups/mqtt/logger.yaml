@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: mqttlogger
-          image: SPECIFY_IMAGE_HERE
+          image: image-registry.apps.2.rahti.csc.fi/protocol-measurements/mqtt-logger:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 1883
