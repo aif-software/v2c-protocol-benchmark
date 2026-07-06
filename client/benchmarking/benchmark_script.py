@@ -9,34 +9,32 @@ import os
 from latency_script import calculate_latency_chunked, summarize_local_pub
 import signal
 from cloud_orchestrator import Orchestrator
-
 import warnings
 from calc_offset import run_offset_calc
 import traceback
 
+# Ignore depracated packages dependency etc warnigns
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-protocol_order = {}
 
+# Basically the "main" functionality of function
+def run_benchmark(protocol, qos=0, setting="simulation"):
 
-def run_benchmark(protocol, iterations, qos=0, setting="simulation"):
-    
     PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
     config_path = Path(__file__).parent / "benchmark_config.json"
-    
+
     with open(config_path, "r", encoding="utf-8") as f:
         config = json.load(f)
 
     clock_offset_address = config["client_settings"]["clock_offset_address"]
 
-
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    
+
     rahti_project = config["server_settings"]["rahti_project"]
     orchestrator = Orchestrator(rahti_project)
-    
-    python_exec = PROJECT_ROOT / "venv/bin/python"
+
+    python_exec = PROJECT_ROOT / f"{str(config["general"]["venv_path"])}/bin/python"
     client_root = PROJECT_ROOT / "client/can_feeder"
 
     if protocol is None:
@@ -53,24 +51,20 @@ def run_benchmark(protocol, iterations, qos=0, setting="simulation"):
     for protocol, qos_list in protocol_order.items():
         for qos in qos_list:
             print(f"Starting benchmark for protocol={protocol} qos={qos}")
-            results_dir = (
-                f"raw_benchmarking/results/{protocol}_{timestamp}_QOS_{qos}"
-            )
 
+            results_dir = f"raw_benchmarking/results/{protocol}_{timestamp}_QOS_{qos}"
             config["client_settings"]["path"] = results_dir
-
             os.makedirs(results_dir, exist_ok=True)
         try:
-
             orchestrator.delete_protocol_setup(protocol)
 
             orchestrator.deploy_protocol_setup(protocol, qos)
-            time.sleep(5) # delay to give time for cloud deployment to startup
-        
+            time.sleep(5)  # delay to give time for cloud deployment to startup
+
             bucket: str = f"{protocol}_bucket{qos}"
             output_file = f"{results_dir}/{protocol}_results_qos_{qos}.csv"
             file_name_base = f"{results_dir}/{protocol}_test_{int(time.time())}"
-            
+
             summary_output_file = f"{file_name_base}_summary.txt"
             start_time = datetime.datetime.utcnow().isoformat() + "Z"
 
@@ -87,7 +81,9 @@ def run_benchmark(protocol, iterations, qos=0, setting="simulation"):
             vn_stop = threading.Event()
             vn_log_path = f"{results_dir}/vnstat_continuous.txt"
 
-            print("Logging VnStat:", orchestrator.get_endpoint_pod_name(protocol=protocol))
+            print(
+                "Logging VnStat:", orchestrator.get_endpoint_pod_name(protocol=protocol)
+            )
             vn_thread = threading.Thread(
                 target=get_network_metrics_vnstat,
                 kwargs=dict(
@@ -101,7 +97,7 @@ def run_benchmark(protocol, iterations, qos=0, setting="simulation"):
                 daemon=True,
             )
             vn_thread.start()
-            
+
             # start concurrent client
             offset_stop = threading.Event()
             offset_thread = threading.Thread(
@@ -110,7 +106,7 @@ def run_benchmark(protocol, iterations, qos=0, setting="simulation"):
                     url=clock_offset_address,
                     output_file=f"{file_name_base}_offset.txt",
                     interval=1,
-                    stop_event=offset_stop
+                    stop_event=offset_stop,
                 ),
                 daemon=True,
             )
@@ -145,9 +141,7 @@ def run_benchmark(protocol, iterations, qos=0, setting="simulation"):
             while True:
                 try:
                     print("logging...")
-                    time.sleep(
-                        15
-                    )  # set delay, so that other logging still persists
+                    time.sleep(15)  # set delay, so that other logging still persists
                     break
                 except KeyboardInterrupt:
                     print("logging stopped..")
@@ -182,7 +176,7 @@ def run_benchmark(protocol, iterations, qos=0, setting="simulation"):
 
             calculate_latency_chunked(
                 bucket=bucket,
-                org="University of Oulu",
+                org=config["general"]["influx_org"],
                 start_iso=start_time,
                 stop_iso=stop_time,
                 raw_output_file=output_file,
@@ -192,9 +186,9 @@ def run_benchmark(protocol, iterations, qos=0, setting="simulation"):
                 window_seconds=30,
                 max_rows_per_chunk=5000,
                 sleep_between_seconds=1,
-                offset_csv=f"{file_name_base}_offset.txt"
+                offset_csv=f"{file_name_base}_offset.txt",
             )
-            
+
             summarize_local_pub(path=summary_output_file)
 
             orchestrator.delete_protocol_setup(protocol)
@@ -320,18 +314,38 @@ def get_network_metrics(duration, out_path="network_metrics.txt", ip=0, iperf_po
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--protocol", choices=["mqtt", "amqp", "coap", "http2", "http3"], default=None
+        "--protocol",
+        choices=[
+            "mqtt",
+            "amqp",
+            "coap",
+            "http2",
+            "http3",
+        ],
+        default=None,
     )
     parser.add_argument(
-        "--qos", type=int, default=None, help="Quality of Service level"
+        "--qos",
+        type=int,
+        default=None,
+        help="Quality of Service level",
     )
-    parser.add_argument("--setting",type=str, default="simulation")
+    parser.add_argument(
+        "--setting",
+        type=str,
+        default="simulation",
+    )
     args = parser.parse_args()
+
     protocol = args.protocol
     qos = args.qos
-    setting=args.setting
+    setting = args.setting
 
-    run_benchmark(protocol, 1, qos=qos, setting=setting)
+    run_benchmark(
+        protocol=protocol,
+        qos=qos,
+        setting=setting,
+    )
 
 
 if __name__ == "__main__":

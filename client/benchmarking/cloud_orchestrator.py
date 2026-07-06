@@ -10,17 +10,15 @@ from dataclasses import dataclass
 
 class Orchestrator:
     def __init__(self, namespace):
-        
+
         config_path = Path(__file__).parent / "benchmark_config.json"
         with open(config_path, "r", encoding="utf-8") as f:
             self.settings_config = json.load(f)
-        
+
         self.k8s_client = config.new_client_from_config()
         self.dyn_client = DynamicClient(self.k8s_client)
         self.namespace = namespace
-        
-        
-        
+
         self.protocols = {
             "coap": {"server": ["coap-server"], "service": "coap-service"},
             "mqtt": {
@@ -47,7 +45,6 @@ class Orchestrator:
 
         return pods_linked
 
-
     def find_linked_services(self, deployment_name):
         services_linked = []
         services = self.dyn_client.resources.get(api_version="v1", kind="Service")
@@ -58,13 +55,14 @@ class Orchestrator:
 
         return services_linked
 
-
     def delete_deployment(self, deployment_name):
         try:
             pods_linked = self.find_linked_pods(deployment_name)
             services_linked = self.find_linked_services(deployment_name)
             services = self.dyn_client.resources.get(api_version="v1", kind="Service")
-            deployments = self.dyn_client.resources.get(api_version="apps/v1", kind="Deployment")
+            deployments = self.dyn_client.resources.get(
+                api_version="apps/v1", kind="Deployment"
+            )
             deployments.delete(
                 name=deployment_name,
                 namespace=self.namespace,
@@ -83,7 +81,9 @@ class Orchestrator:
         for pod in pods_linked:
             while True:
                 try:
-                    current_pod = v1_pods.get(name=pod.metadata.name, namespace=self.namespace)
+                    current_pod = v1_pods.get(
+                        name=pod.metadata.name, namespace=self.namespace
+                    )
                     print("pod status: ", current_pod.status.phase)
                     if (
                         current_pod.status.phase == "Terminated"
@@ -111,7 +111,6 @@ class Orchestrator:
             print(f"Deleted Service: {service.metadata.name}")
         return True
 
-
     def delete_service(self, service_name):
         services = self.dyn_client.resources.get(api_version="v1", kind="Service")
 
@@ -126,23 +125,26 @@ class Orchestrator:
             print(f"Service {service_name} not found, assuming deleted...")
         return True
 
-
     def deploy_protocol_setup(self, protocol: str, qos):
         deployment_manifest_paths = self.settings_config["yaml_paths"].get(protocol)
         PROJECT_ROOT = Path(__file__).resolve().parents[2]
         for deployment_manifest_path in deployment_manifest_paths:
-            deployment_manifest_path =  f"{PROJECT_ROOT}/{deployment_manifest_path}"
+            deployment_manifest_path = f"{PROJECT_ROOT}/{deployment_manifest_path}"
 
             with open(deployment_manifest_path, "r") as file:
                 deployment_manifest = yaml.safe_load_all(file)
                 for manifest in deployment_manifest:
                     if manifest is None:
                         continue
-                    print(manifest)
-
+                    # print(manifest)
                     if manifest["kind"] == "Deployment":
-                        for container in manifest["spec"]["template"]["spec"]["containers"]:
-                            if container["name"] == self.protocols[protocol]["server"][-1]:
+                        for container in manifest["spec"]["template"]["spec"][
+                            "containers"
+                        ]:
+                            if (
+                                container["name"]
+                                == self.protocols[protocol]["server"][-1]
+                            ):
                                 for env_var in container["env"]:
                                     if env_var["name"] == "QOS_LEVEL":
                                         print("Setting QOS env var to:", str(qos))
@@ -153,7 +155,6 @@ class Orchestrator:
                                             f"{protocol}_bucket{qos}",
                                         )
                                         env_var["value"] = f"{protocol}_bucket{qos}"
-
 
                     try:
                         resource_api = self.dyn_client.resources.get(
@@ -214,7 +215,6 @@ class Orchestrator:
         print("Deployment created successfully.")
         return True
 
-
     def delete_protocol_setup(self, protocol: str):
         current_protocol = self.protocols.get(protocol)
         if not current_protocol:
@@ -233,19 +233,21 @@ class Orchestrator:
         if service:
             self.delete_service(service)
 
-
     def get_endpoint_pod_name(self, protocol: str):
         current_protocol = self.protocols.get(protocol)
         if not current_protocol:
             print(f"Unknown protocol: {protocol}")
             return None
+        print(current_protocol)
 
         server = current_protocol.get("server")
+        print(server)
 
         if isinstance(server, list):
             server = server[0]
 
         pods = self.find_linked_pods(server)
+        print(pods)
         if pods:
             return pods[0].metadata.name
         return None
