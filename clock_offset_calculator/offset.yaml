@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: offset-calculator
-          image: image-registry.openshift-image-registry.svc:5000/kuura-benchmarking/offset-calc:latest
+          image: image-registry.openshift-image-registry.svc:5000/protocol-measurements/offset-calc:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
@@ -31,6 +31,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: offset-calculator-service
+  annotations:
+     metallb.universe.tf/allow-shared-ip: "label-to-share-1.2.3.4"
 spec:
   ports:
     - name: http

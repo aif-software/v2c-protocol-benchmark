@@ -79,6 +79,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mosquitto-service
+  annotations:
+     metallb.universe.tf/allow-shared-ip: "label-to-share-1.2.3.4"
 spec:
   type: LoadBalancer
   allocateLoadBalancerNodePorts: false
@@ -87,11 +89,11 @@ spec:
   ports:
     - name: mqtt
       protocol: TCP
-      port: 30685
+      port: 30686
       targetPort: 8883
     - name: iperf3-tcp # open port for iperf3 server inside same pod
       protocol: TCP
-      port: 30686
+      port: 30687
       targetPort: 5201
 
 ---

@@ -86,15 +86,17 @@ kind: Service
 metadata:
   name: https-service
   namespace: protocol-measurements
+  annotations:
+     metallb.universe.tf/allow-shared-ip: "label-to-share-1.2.3.4"
 spec:
   ports:
     - name: http
       protocol: TCP
-      port: 30685
+      port: 30686
       targetPort: 8000
     - name: iperf3-tcp # open port for iperf3 server inside same pod
       protocol: TCP
-      port: 30686
+      port: 30687
       targetPort: 5201
   allocateLoadBalancerNodePorts: false
   type: LoadBalancer
