@@ -1,23 +1,27 @@
 {
+  "general": {
+    "venv_path": ".venv",
+    "influx_org": "unioulu"
+  },
   "can": {
     "interface": "socketcan",
     "channel": "can0",
     "delay": 0,
-    "database": "PATH_TO_DBC_FILE_HERE",
+    "database": "dbc/toyota-can.dbc",
     "filter_set": []
   },
   "simulation": {
     "interface": "file",
-    "channel": "PATH_TO_CAN_JSON_DATA_HERE",
+    "channel": "data/can_dump.json",
     "delay": 0,
     "database": ""
   },
   "client_settings": {
-    "server_address": "SERVER_IP_ADDRESS_HERE",
+    "server_address": "86.50.231.169",
     "certs_path": "certs/ca.crt",
-    "server_port": 30685,
-    "iperf_port": 30686,
-    "clock_offset_address": "http://ADDRESS_HERE:30685",
+    "server_port": 30686,
+    "iperf_port": 30687,
+    "clock_offset_address": "http://86.50.231.169:30685",
     "topic": "toyota",
     "window": 100,
     "workers": 100,
