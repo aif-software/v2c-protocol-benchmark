@@ -20,23 +20,33 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 # Basically the "main" functionality of function
 def run_benchmark(protocol, qos=0, setting="simulation"):
 
+    # Set project root to be 2 folders down.
     PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
+    # Set config path to be in same folder
+    # NOTE: Should this be moved to own folder?
     config_path = Path(__file__).parent / "benchmark_config.json"
 
+    # Load config
     with open(config_path, "r", encoding="utf-8") as f:
         config = json.load(f)
 
+    # Get clock offset address. The /sync needs to be included in the address.
     clock_offset_address = config["client_settings"]["clock_offset_address"]
 
+    # Create timestamps from this moment in format described in strftime().
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
+    # Get rahti project from config and creat orchestrator.
     rahti_project = config["server_settings"]["rahti_project"]
     orchestrator = Orchestrator(rahti_project)
 
+    # Define what python environment to use and where to find client codes.
     python_exec = PROJECT_ROOT / f"{str(config["general"]["venv_path"])}/bin/python"
     client_root = PROJECT_ROOT / "client/can_feeder"
 
+    # Set up protocols
+    # NOTE: This can actually be done when defining the args so this code block is not needed right here. Refactor to reduce code complexity. I'm not sure why there would be any reason to order the protocols since for a controlled test that shouldn't matter.
     if protocol is None:
         protocol_order = {
             "http3": [0],
@@ -48,14 +58,15 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
     else:
         protocol_order = {protocol: [qos]}
 
+    # Go through the different protocols.
     for protocol, qos_list in protocol_order.items():
         for qos in qos_list:
             print(f"Starting benchmark for protocol={protocol} qos={qos}")
-
+        try:
             results_dir = f"raw_benchmarking/results/{protocol}_{timestamp}_QOS_{qos}"
             config["client_settings"]["path"] = results_dir
             os.makedirs(results_dir, exist_ok=True)
-        try:
+
             orchestrator.delete_protocol_setup(protocol)
 
             orchestrator.deploy_protocol_setup(protocol, qos)
@@ -68,8 +79,7 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
             summary_output_file = f"{file_name_base}_summary.txt"
             start_time = datetime.datetime.utcnow().isoformat() + "Z"
 
-            # start concurrent network metrics logging
-
+            # start concurrent hardware metrics logging
             oc_stop = threading.Event()
             oc_thread = threading.Thread(
                 target=get_hardware_metrics,
@@ -78,9 +88,9 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
             )
             oc_thread.start()
 
+            # start concurrent network metrics logging
             vn_stop = threading.Event()
             vn_log_path = f"{results_dir}/vnstat_continuous.txt"
-
             print(
                 "Logging VnStat:", orchestrator.get_endpoint_pod_name(protocol=protocol)
             )
@@ -98,7 +108,7 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
             )
             vn_thread.start()
 
-            # start concurrent client
+            # start concurrent client for clock_offset_calculator.
             offset_stop = threading.Event()
             offset_thread = threading.Thread(
                 target=run_offset_calc,
