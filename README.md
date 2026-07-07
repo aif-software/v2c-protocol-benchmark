@@ -20,12 +20,15 @@ Using the project requires authorization to the Rahti servers with the use of Op
 You should now be authorized and can proceed with setting up the project.  
 **Note:** this authorization must be repeated every 24 hours.
 
-- For setting up non-TCP connections in Rahti, follow:  
-  https://docs.csc.fi/cloud/rahti/networking/#using-loadbalancer-service-type-with-dedicated-ips  
+For setting up non-TCP connections in Rahti, follow:  
+https://docs.csc.fi/cloud/rahti/networking/#using-loadbalancer-service-type-with-dedicated-ips  
 
 ### Benchmark setup
 
-This project relies on a number of configuration values that must be provided before use.
+This project relies on a number of configuration values that must be provided before use. For example
+you need to know the ip address you're going to use for exposing the ports on the OKD cluster. For CSC
+this ip-address can be retrieved with service request to servicedesk@csc.fi. For other OKD providers the
+setup can change so ask your provider how to set up LoadBalancer service.
 
 #### Server-side setup
 
@@ -49,7 +52,7 @@ oc create -f clock_offset_calculator/offset.yaml
 # config.env
 
 CERT_PATH=/certs
-CLIENT_ID=
+CLIENT_ID=randomCliendId
 LOG_FILE_PATH=/tmp/log.txt
 LOG_LEVEL=WARNING
 TSDB_URL=
@@ -58,7 +61,7 @@ TSDB_PROTOCOL=https
 TSDB_ORG=
 WORKER_COUNT=10
 BROKER_IP=
-BROKER_PORT=30685
+BROKER_PORT=30686
 ```
 
 ```
@@ -75,8 +78,9 @@ TSDB_PASSWORD=
 TSDB_TOKEN=
 ```
 
-  - The username and passwords can be defined as anything. For the TSDB_TOKEN, an API Token with read-buckets permission is required. The instructions for fetching it is found at https://docs.influxdata.com/influxdb/v2/admin/tokens/create-token/
+  - The usernames and passwords can be defined as anything for the secrets.env except the TSDB_TOKEN. an API Token with read-buckets permission is required. The instructions for fetching it is found at https://docs.influxdata.com/influxdb/v2/admin/tokens/create-token/
 
+  - For the config.env BROKER_IP will be the ip-address you got from your OKD provider. TSDB_URL is basically whatever but it needs to be same as the route for influxdb in server/influx/influx.yaml. The TSDB_ORG is the organization you set during the influx initial setup.
 
 - Deploy config to Rahti as ConfigMap:
 ```bash
@@ -90,7 +94,7 @@ oc create configmap app-config --from-env-file=config.env --dry-run=client -o ya
 
 ##### 4. Protocol-specific config
 
-- Before being able to deploy the protocol to the cloud, the image must be made available. This can be done by deploying the protocols' dockerfile (found in server/protocol_setups/protocol) to any image repository (e.g., Rahti's ImageStream, or DockerHub)
+- Before being able to deploy the protocol to the cloud, the image must be made available. This can be done by deploying the protocols' dockerfile (found in server/protocol_setups/protocol) to any image repository (e.g., Rahti's (ImageStream)[https://docs.csc.fi/cloud/rahti/images/Using_Rahti_integrated_registry/], or DockerHub)
 - The protocols' deployment YAML file (e.g., [logger.yaml](server/protocol_setups/mqtt/logger.yaml)) must then be modified to use that deployed image.
 - Also in the protocols' deployment files, fill the values for
   - image
