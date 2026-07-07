@@ -21,7 +21,7 @@
     "certs_path": "certs/ca.crt",
     "server_port": 30686,
     "iperf_port": 30687,
-    "clock_offset_address": "http://86.50.231.169:30685",
+    "clock_offset_address": "http://86.50.231.169:30685/sync",
     "topic": "toyota",
     "window": 100,
     "workers": 100,
