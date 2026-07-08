@@ -10,6 +10,7 @@ from uuid import uuid4
 RUN_ID = uuid4().hex
 MESSAGE_ID = itertools.count(1)
 
+
 async def start_client(dispatcher, output, qos, mode="normal", setting="simulation"):
     try:
         log_file = open(output, "w")
@@ -21,19 +22,29 @@ async def start_client(dispatcher, output, qos, mode="normal", setting="simulati
 
         if setting == "simulation":
             async for msg, can_received_time in can_reader.read_from_json_all_async():
-                await handle_message(msg=msg, can_received_time=can_received_time, dispatcher=dispatcher, qos=qos)
+                await handle_message(
+                    msg=msg,
+                    can_received_time=can_received_time,
+                    dispatcher=dispatcher,
+                    qos=qos,
+                )
         elif setting == "can":
             db, bus = can_reader.init_can_connection()
             while True:
                 msg = can_reader.read(db=db, bus=bus)
                 if msg is None:
                     continue
-                await handle_message(msg=msg,can_received_time=time_ns(),dispatcher=dispatcher,qos=qos,)
+                await handle_message(
+                    msg=msg,
+                    can_received_time=time_ns(),
+                    dispatcher=dispatcher,
+                    qos=qos,
+                )
         else:
-            print("Invalid setting. Use either \"simulation\" or \"can\"")
+            print('Invalid setting. Use either "simulation" or "can"')
 
     except asyncio.CancelledError:
-        print("Code execution was interrupted by user.")
+        print("Code execution was interrupted")
         time_stopped = time.time()
     finally:
         time_stopped = time.time()
@@ -42,7 +53,7 @@ async def start_client(dispatcher, output, qos, mode="normal", setting="simulati
 
         stopped, shutdowned_messages = await dispatcher.shutdown()
         log_file = open(output, "a")
-        
+
         for s in shutdowned_messages:
             log_file.write(json.dumps(s) + "\n")
         log_file.flush()
@@ -56,6 +67,7 @@ async def start_client(dispatcher, output, qos, mode="normal", setting="simulati
             "Average sent rate:" + str(round(dispatcher.can_read_rate)) + "\n"
         )
         log_file.flush()
+
 
 async def handle_message(msg, can_received_time, dispatcher, qos):
     name = msg.get("name", "Unknown")
@@ -104,6 +116,7 @@ async def handle_message(msg, can_received_time, dispatcher, qos):
         },
     )
 
+
 async def publish_can_data_structured(
     protocol_publisher,
     msg_id,
@@ -125,3 +138,4 @@ async def publish_can_data_structured(
         qos,
         latency_metrics,
     )
+
