@@ -46,7 +46,6 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
     client_root = PROJECT_ROOT / "client/can_feeder"
 
     # Set up protocols
-    # NOTE: This can actually be done when defining the args so this code block is not needed right here. Refactor to reduce code complexity. I'm not sure why there would be any reason to order the protocols since for a controlled test that shouldn't matter.
     if protocol is None:
         protocol_order = {
             "http3": [0],
@@ -80,6 +79,7 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
             start_time = datetime.datetime.utcnow().isoformat() + "Z"
 
             # start concurrent hardware metrics logging
+            # TODO: update args to kwargs for consistency.
             oc_stop = threading.Event()
             oc_thread = threading.Thread(
                 target=get_hardware_metrics,
@@ -143,19 +143,9 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
                 proc.send_signal(signal.SIGINT)
                 try:
                     proc.wait(timeout=10)
-
                 except subprocess.TimeoutExpired:
                     print("Child didnt exit in time, forcing kill.")
                     proc.kill()
-
-            while True:
-                try:
-                    print("logging...")
-                    time.sleep(15)  # set delay, so that other logging still persists
-                    break
-                except KeyboardInterrupt:
-                    print("logging stopped..")
-                    break
 
             # stop concurrent logging
             oc_stop.set()
@@ -203,26 +193,27 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
 
             orchestrator.delete_protocol_setup(protocol)
 
-        except Exception as e:
-            traceback.print_exc()
-        finally:
+            # NOTE: This was before after finally
             stop_time = datetime.datetime.utcnow().isoformat() + "Z"
             run_dir = f"{results_dir}/run"
             os.makedirs(run_dir, exist_ok=True)
+            summary_file = os.path.join(run_dir, f"run_summary.txt")
+            try:
+                with open(summary_file, "a", buffering=1) as f:
+                    f.write(f"=== Benchmark run summary ===\n")
+                    f.write(f"Start time: {start_time}\n")
+                    f.write(f"Stop time: {stop_time}\n")
+                    f.write(f"Output file: {output_file}\n")
+                    f.write(f"Summary output file: {summary_output_file}\n")
+                    f.write("\n")
+                time.sleep(10)
 
-        summary_file = os.path.join(run_dir, f"run_summary.txt")
-        try:
-            with open(summary_file, "a", buffering=1) as f:
-                f.write(f"=== Benchmark run summary ===\n")
-                f.write(f"Start time: {start_time}\n")
-                f.write(f"Stop time: {stop_time}\n")
-                f.write(f"Output file: {output_file}\n")
-                f.write(f"Summary output file: {summary_output_file}\n")
-                f.write("\n")
-            time.sleep(10)
+            except UnboundLocalError as e:
+                print("Error with running the benchmark")
 
-        except UnboundLocalError as e:
-            print("Error with running the benchmark")
+        except Exception as e:
+            print(e)
+            traceback.print_exc()
 
 
 def get_hardware_metrics(out_path: str, interval_sec: int, stop_event: threading.Event):
@@ -321,9 +312,16 @@ def get_network_metrics(duration, out_path="network_metrics.txt", ip=0, iperf_po
         raise
 
 
+# NOTE: It would be good to think if we need the protocols to EVER run sequantially.
+# Would that be good for the tests or not? IMO not because then the tests are not controlled
+# and can be exposed to confounding factors like the position of the network base station,
+# the level of the terrain, direction of movement and such. Other opinions neede on this matter.
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        "-p",
         "--protocol",
         choices=[
             "mqtt",
@@ -333,14 +331,17 @@ def main():
             "http3",
         ],
         default=None,
+        help="Protocols",
     )
     parser.add_argument(
+        "-q",
         "--qos",
         type=int,
         default=None,
         help="Quality of Service level",
     )
     parser.add_argument(
+        "-s",
         "--setting",
         type=str,
         default="simulation",
