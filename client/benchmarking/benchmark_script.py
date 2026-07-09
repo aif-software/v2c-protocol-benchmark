@@ -78,7 +78,7 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
                 file_name_base = f"{results_dir}/{protocol}_test_{int(time.time())}"
 
                 summary_output_file = f"{file_name_base}_summary.txt"
-                start_time = datetime.now(UTC).isoformat() + "Z"
+                start_time = datetime.now().replace(tzinfo=None).isoformat() + "Z"
 
                 # start concurrent hardware metrics logging
                 # TODO: update args to kwargs for consistency.
@@ -160,7 +160,7 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
                 offset_stop.set()
                 offset_thread.join(timeout=2)
 
-                stop_time = datetime.now(UTC).isoformat() + "Z"
+                stop_time = datetime.now().replace(tzinfo=None).isoformat() + "Z"
                 run_dir = f"{results_dir}/run"
                 os.makedirs(run_dir, exist_ok=True)
 
@@ -203,7 +203,7 @@ def get_hardware_metrics(out_path: str, interval_sec: int, stop_event: threading
 
     with open(out_path, "a", buffering=1) as f:
         while not stop_event.is_set():
-            ts = datetime.now(UTC).isoformat() + "Z"
+            ts = datetime.now().replace(tzinfo=None).isoformat() + "Z"
             res = subprocess.run(
                 ["oc", "adm", "top", "pods"], capture_output=True, text=True
             )
@@ -229,7 +229,7 @@ def get_network_metrics(
 
     with open(out_path, "a", buffering=1) as f:
         while not stop_event.is_set():
-            ts = datetime.now(UTC).isoformat() + "Z"
+            ts = datetime.now().replace(tzinfo=None).isoformat() + "Z"
             f.write(f"=== {ts} ===\n")
             res = subprocess.run(
                 [
@@ -261,10 +261,7 @@ def get_network_metrics(
             time.sleep(0.1)
 
 
-# NOTE: It would be good to think if we need the protocols to EVER run sequantially.
-# Would that be good for the tests or not? IMO not because then the tests are not controlled
-# and can be exposed to confounding factors like the position of the network base station,
-# the level of the terrain, direction of movement and such. Other opinions neede on this matter.
+# NOTE: It would be good to think if we need the protocols to EVER run sequantially. Would that be good for the tests or not? IMO not because then the tests are not controlled and can be exposed to confounding factors like the position of the network base station, the level of the terrain, direction of movement and such. Other opinions neede on this matter.
 
 
 def main():
