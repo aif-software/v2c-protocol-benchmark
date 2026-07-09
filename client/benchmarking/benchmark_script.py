@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, UTC
 import json
 from pathlib import Path
 import subprocess
@@ -35,7 +35,7 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
     clock_offset_address = config["client_settings"]["clock_offset_address"]
 
     # Create timestamps from this moment in format described in strftime().
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     # Get rahti project from config and creat orchestrator.
     rahti_project = config["server_settings"]["rahti_project"]
@@ -79,7 +79,7 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
                 file_name_base = f"{results_dir}/{protocol}_test_{int(time.time())}"
 
                 summary_output_file = f"{file_name_base}_summary.txt"
-                start_time = datetime.datetime.utcnow().isoformat() + "Z"
+                start_time = datetime.now(UTC).isoformat() + "Z"
 
                 # start concurrent hardware metrics logging
                 # TODO: update args to kwargs for consistency.
@@ -99,7 +99,7 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
                     orchestrator.get_endpoint_pod_name(protocol=protocol),
                 )
                 vn_thread = threading.Thread(
-                    target=get_network_metrics_vnstat,
+                    target=get_network_metrics,
                     kwargs=dict(
                         duration=5,
                         out_path=vn_log_path,
@@ -161,7 +161,7 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
                 offset_stop.set()
                 offset_thread.join(timeout=2)
 
-                stop_time = datetime.datetime.utcnow().isoformat() + "Z"
+                stop_time = datetime.now(UTC).isoformat() + "Z"
                 run_dir = f"{results_dir}/run"
                 os.makedirs(run_dir, exist_ok=True)
 
@@ -204,7 +204,7 @@ def get_hardware_metrics(out_path: str, interval_sec: int, stop_event: threading
 
     with open(out_path, "a", buffering=1) as f:
         while not stop_event.is_set():
-            ts = datetime.datetime.utcnow().isoformat() + "Z"
+            ts = datetime.now(UTC).isoformat() + "Z"
             res = subprocess.run(
                 ["oc", "adm", "top", "pods"], capture_output=True, text=True
             )
@@ -221,8 +221,8 @@ def get_hardware_metrics(out_path: str, interval_sec: int, stop_event: threading
                 time.sleep(0.1)
 
 
-def get_network_metrics_vnstat(
-    duration, out_path, pod, container, iface, stop_event: threading.Event = None
+def get_network_metrics(
+    duration, out_path, pod, container, iface, stop_event: threading.Event
 ):
     dirpath = os.path.dirname(out_path)
     if dirpath:
@@ -230,7 +230,7 @@ def get_network_metrics_vnstat(
 
     with open(out_path, "a", buffering=1) as f:
         while not stop_event.is_set():
-            ts = datetime.datetime.utcnow().isoformat() + "Z"
+            ts = datetime.now(UTC).isoformat() + "Z"
             f.write(f"=== {ts} ===\n")
             res = subprocess.run(
                 [
@@ -260,37 +260,6 @@ def get_network_metrics_vnstat(
                     break
                 time.sleep(0.1)
             time.sleep(0.1)
-
-
-def get_network_metrics(duration, out_path="network_metrics.txt", ip=0, iperf_port="0"):
-    iperf_args = [
-        "iperf3",
-        "-c",
-        ip,
-        "-p",
-        iperf_port,
-        "-t",
-        str(duration),
-        "-i",
-        "10",  # , "-b", "2M"
-    ]
-
-    dirpath = os.path.dirname(out_path)
-    if dirpath:
-        os.makedirs(dirpath, exist_ok=True)
-
-    iperf_out = open(out_path, "w")
-
-    try:
-        process = subprocess.Popen(
-            iperf_args, stdout=iperf_out, stderr=subprocess.STDOUT
-        )
-        return process
-
-    except:
-        iperf_out.close()
-        print("iperf failed")
-        raise
 
 
 # NOTE: It would be good to think if we need the protocols to EVER run sequantially.
