@@ -8,12 +8,15 @@ from time import perf_counter_ns, time_ns
 
 MAX_RTT_MS = 100.0
 
+
 async def get_server_offset(client, url, current_offset_ms):
     res = await get_clock_offset(client, url)
     if not res:
         return None, current_offset_ms
 
-    res["uncertainty_ms"] = res["rtt_ms"] / 2.0 # calculate uncertainty, which is the the maximum possible error margin.
+    res["uncertainty_ms"] = (
+        res["rtt_ms"] / 2.0
+    )  # calculate uncertainty, which is the the maximum possible error margin.
 
     # only update if its below the limit, else ignore
     if res["rtt_ms"] <= MAX_RTT_MS:
@@ -21,7 +24,10 @@ async def get_server_offset(client, url, current_offset_ms):
 
     return res, current_offset_ms
 
-async def get_server_offset_probes(client, url, current_offset_ms, probes=10, probe_spacing=0.02):
+
+async def get_server_offset_probes(
+    client, url, current_offset_ms, probes=10, probe_spacing=0.02
+):
     best = None
     for _ in range(probes):
         res = await get_clock_offset(client, url)
@@ -41,6 +47,7 @@ async def get_server_offset_probes(client, url, current_offset_ms, probes=10, pr
         current_offset_ms = best["offset_ms"]
 
     return best, current_offset_ms
+
 
 async def get_clock_offset(client, url):
     client_start = time_ns()
@@ -63,6 +70,7 @@ async def get_clock_offset(client, url):
     except Exception as e:
         print(f"Request failed: {e}")
         return None
+
 
 async def calculate_offset(
     url="",
@@ -101,16 +109,16 @@ def run_offset_calc(**kwargs):
 
 
 if __name__ == "__main__":
-    
+
     PROJECT_ROOT = Path(__file__).resolve().parents[2]
     config_path = Path(__file__).parent / "benchmark_config.json"
     with open(config_path, "r", encoding="utf-8") as f:
         config = json.load(f)
-    
+
     clock_offset_address = config["client_settings"]["clock_offset_address"]
     stop_event = asyncio.Event()
     run_offset_calc(
-        url = f"{clock_offset_address.rstrip('/')}/sync",
+        url=f"{clock_offset_address.rstrip('/')}/sync",
         interval=0.5,
         output_file="test_offset.csv",
         stop_event=stop_event,

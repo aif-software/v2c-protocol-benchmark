@@ -300,7 +300,6 @@ def calculate_latency_chunked(
     cur = start_dt
 
     combined = {name: [] for (name, _, _) in LATENCY_CALCULATION_CONFIG}
-    
 
     while cur < stop_dt:
         nxt = min(cur + dt.timedelta(seconds=window_seconds), stop_dt)
@@ -310,11 +309,11 @@ def calculate_latency_chunked(
                     f"Attempting to query from: {cur.isoformat()} to {nxt.isoformat()}"
                 )
 
-                query = f'''from(bucket: "{bucket}")
+                query = f"""from(bucket: "{bucket}")
                 |> range(start: {cur.isoformat()}, stop: {nxt.isoformat()})
                 |> pivot(rowKey: ["_time", "_measurement"], columnKey: ["_field"], valueColumn: "_value")
                 
-                '''
+                """
 
                 if max_rows_per_chunk is not None:
                     query += f' |> sort(columns: ["_time","_measurement"]) |> limit(n: {max_rows_per_chunk})'
@@ -350,15 +349,15 @@ def calculate_latency_chunked(
 
 
 def initialise_client():
-    
+
     env_path = Path(__file__).resolve().parents[2] / "config.env"
     load_dotenv(env_path)
-    
+
     secrets_path = Path(__file__).resolve().parents[2] / "secrets.env"
     load_dotenv(secrets_path)
 
     influx_address = f"{os.getenv('TSDB_PROTOCOL')}://{os.getenv('TSDB_URL')}:{os.getenv('TSDB_PORT')}"
-    
+
     client = influxdb_client.InfluxDBClient(
         url=influx_address,
         token=os.getenv("TSDB_TOKEN"),
@@ -516,6 +515,7 @@ def calculate_latency_from_csv(
 
     write_summary_from_combined(summary_output_file, combined)
 
+
 def process_parent_directory(parent_dir: str):
     parent = Path(parent_dir)
 
@@ -555,4 +555,3 @@ def process_parent_directory(parent_dir: str):
             summary_output_file=str(summary_file),
             offset_csv=str(offset_file) if offset_file else None,
         )
-

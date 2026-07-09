@@ -4,7 +4,10 @@ import re
 from statistics import mean, median
 from pathlib import Path
 
-stat_re = re.compile(r'^(Average|Standard Deviation|Standard deviation|Minimum|Maximum|Median|Sample count)\s*:?\s*([\d.]+)')
+stat_re = re.compile(
+    r"^(Average|Standard Deviation|Standard deviation|Minimum|Maximum|Median|Sample count)\s*:?\s*([\d.]+)"
+)
+
 
 def parse_file(path):
     metrics = {}
@@ -26,7 +29,7 @@ def parse_file(path):
 
             if not current:
                 continue
-            
+
             match = stat_re.match(line)
             if not match:
                 continue
@@ -50,6 +53,7 @@ def parse_file(path):
 
     return metrics, sample_count
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("inputs", nargs="+")
@@ -66,11 +70,11 @@ def main():
                 files_used.append(str(path))
                 file_metrics, samples = parse_file(path)
                 file_samples.append(samples)
-                
+
                 for metric, stats in file_metrics.items():
                     if metric not in all_metrics:
                         all_metrics[metric] = {}
-                        
+
                     for stat, vals in stats.items():
                         if stat not in all_metrics[metric]:
                             all_metrics[metric][stat] = []
@@ -88,5 +92,7 @@ def main():
         for metric, stats in all_metrics.items():
             for stat, vals in stats.items():
                 w.writerow([metric, stat, mean(vals), median(vals)])
+
+
 if __name__ == "__main__":
     main()
