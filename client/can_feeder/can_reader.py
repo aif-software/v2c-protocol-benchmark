@@ -9,6 +9,7 @@ import cantools.database.namedsignalvalue
 import sys
 from pathlib import Path
 import sys
+
 # from mqtt_publisher import SimpleMQTTMessage
 import random
 from time import time_ns
@@ -18,11 +19,12 @@ _logger = logging.getLogger(__name__)
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from common.config import BENCHMARK_CONFIG_PATH
+
 config: dict = json.load(open(BENCHMARK_CONFIG_PATH))
 
 
-
 ####
+
 
 def init_can_connection():
     database = config["can"]["database"]
@@ -32,8 +34,9 @@ def init_can_connection():
     filter_set = set(config["can"]["filter_set"])
     db = cantools.database.load_file(database)
     bus = can.Bus(channel=channel, interface=interface)
-    
+
     return db, bus
+
 
 def create_message_entry(
     message: can.Message,
@@ -70,18 +73,16 @@ def create_message_entry(
             "data": message.data.hex(),
             "raw": "0x" + message.data.hex(),
         }
-    
+
 
 # For reading real can connection
+
 
 def read(db, bus, delay=0):
     time.sleep(delay)
     message = bus.recv()
 
     return create_message_entry(message, db, set())
-    
-
-
 
 
 # For simulation from json file
@@ -227,6 +228,7 @@ async def read_from_json_all_async():
 
             yield message, time_ns()
             previous_ts = msg_ts
+        print("All messages handled. Simulation ending...")
 
     except FileNotFoundError:
         print(f"Error: {channel} not found.")

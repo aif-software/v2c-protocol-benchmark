@@ -17,6 +17,7 @@ logging.basicConfig(level=logging.ERROR)
 logging.getLogger("aiocoap").setLevel(logging.ERROR)
 logging.getLogger("aiocoap.message-manager").setLevel(logging.DEBUG)
 
+
 class COAPSender:
     def __init__(self, qos, config, coap_context):
         self.qos = qos
@@ -30,7 +31,7 @@ class COAPSender:
     async def connect(self):
         secrets_path = Path(__file__).resolve().parents[3] / "secrets.env"
         load_dotenv(secrets_path)
-        
+
         self.topic = self.config["client_settings"]["topic"]
 
         self.broker = self.config["client_settings"]["server_address"]
@@ -64,8 +65,6 @@ class COAPSender:
         signal_name: str,
         data: dict,
         timestamp: float,
-        unit: str = None,
-        qos: int = 0,
         latency_metrics=None,
     ):
         """
@@ -113,7 +112,8 @@ class COAPSender:
         if ack:
             try:
                 response = await asyncio.wait_for(
-                    self.coap_context.request(request).response, timeout=self.config["client_settings"].get("timeout")
+                    self.coap_context.request(request).response,
+                    timeout=self.config["client_settings"].get("timeout"),
                 )
                 if response is not None and response.code.is_successful():
                     return_codes.append("SUCCESSFUL")

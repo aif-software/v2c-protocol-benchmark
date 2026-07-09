@@ -44,7 +44,10 @@ async def start_client(dispatcher, output, qos, mode="normal", setting="simulati
             print('Invalid setting. Use either "simulation" or "can"')
 
     except asyncio.CancelledError:
-        print("Code execution was interrupted")
+        print("Code execution was interrupted by program")
+        time_stopped = time.time()
+    except KeyboardInterrupt:
+        print("Code execution was interrupted by user")
         time_stopped = time.time()
     finally:
         time_stopped = time.time()
@@ -138,4 +141,3 @@ async def publish_can_data_structured(
         qos,
         latency_metrics,
     )
-
