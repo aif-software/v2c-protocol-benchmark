@@ -49,8 +49,6 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
-            - name: "QOS_LEVEL"
-              value: "0"
         - name: vnstat
           image: vergoh/vnstat:latest
           volumeMounts:

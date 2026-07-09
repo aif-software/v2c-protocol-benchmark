@@ -131,6 +131,7 @@ class Orchestrator:
         for deployment_manifest_path in deployment_manifest_paths:
             deployment_manifest_path = f"{PROJECT_ROOT}/{deployment_manifest_path}"
 
+            print(f"Reading {deployment_manifest_path} for deployment...")
             with open(deployment_manifest_path, "r") as file:
                 deployment_manifest = yaml.safe_load_all(file)
                 for manifest in deployment_manifest:

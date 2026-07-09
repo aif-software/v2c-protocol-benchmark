@@ -41,7 +41,6 @@ spec:
               value: "0"
             - name: TSDB_BUCKET
               value: "mqtt_bucket0"
-
           volumeMounts:
             - name: logger-certs
               mountPath: /certs
@@ -49,5 +48,4 @@ spec:
         - name: logger-certs
           secret:
             secretName: certs
-
 ---
