@@ -1,20 +1,19 @@
-from datetime import datetime, UTC
+# NOTE: Standard library imports.
 import json
-from pathlib import Path
 import subprocess
 import threading
 import time
 import argparse
 import os
-from latency_script import calculate_latency_chunked, summarize_local_pub
 import signal
-from cloud_orchestrator import Orchestrator
-import warnings
-from calc_offset import run_offset_calc
 import traceback
+from datetime import datetime, UTC
+from pathlib import Path
 
-# Ignore depracated packages dependency etc warnigns
-warnings.filterwarnings("ignore", category=DeprecationWarning)
+# NOTE: Custom code imports.
+from latency_script import calculate_latency_chunked, summarize_local_pub
+from cloud_orchestrator import Orchestrator
+from calc_offset import run_offset_calc
 
 
 # Basically the "main" functionality of function
