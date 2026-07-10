@@ -92,6 +92,9 @@ metadata:
      metallb.universe.tf/allow-shared-ip: "label-to-share-1.2.3.4"
 spec:
   type: LoadBalancer
+  allocateLoadBalancerNodePorts: false
+  selector:
+    app: coap-server # link service to all pods
   ports:
     - name: coaps-udp # dtls
       protocol: UDP
@@ -105,9 +108,5 @@ spec:
       protocol: TCP
       port: 30687
       targetPort: 5201
-  allocateLoadBalancerNodePorts: false
-  selector:
-    app: coap-server # link service to all pods
-
 ---
 
