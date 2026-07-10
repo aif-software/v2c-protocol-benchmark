@@ -76,8 +76,6 @@ def create_message_entry(
 
 
 # For reading real can connection
-
-
 def read(db, bus, delay=0):
     time.sleep(delay)
     message = bus.recv()
@@ -85,108 +83,7 @@ def read(db, bus, delay=0):
     return create_message_entry(message, db, set())
 
 
-# For simulation from json file
-def read_from_json():
-    channel = config["simulation"]["channel"]
-    try:
-        with open(channel, "r") as file:
-            file_content = file.read()
-            try:
-                messages = json.loads(file_content)
-            except json.JSONDecodeError as e:
-                print(f"Error decoding JSON: {e}")
-                return
-
-        while True:
-            time.sleep(random.uniform(0.03, 0.06))  # simulated random delay
-            message = random.choice(messages)  # picking random message
-            if (
-                message.get("name") != "Unknown"
-            ):  # Filter placeholder!!! TODO: real filter file (vin 1-3 + unknowns etc..)
-                can_receive_time = time_ns()
-                yield message, can_receive_time
-
-    except FileNotFoundError:
-        print(f"Error: {channel} not found.")
-
-
-def read_object_from_json(index=0):
-    channel = config["simulation"]["channel"]
-    try:
-        with open(channel, "r") as file:
-            file_content = file.read()
-
-            try:
-                messages = json.loads(file_content)
-            except json.JSONDecodeError as e:
-                print(f"Error decoding JSON: {e}")
-                return
-
-        if index < len(messages):
-            return messages[index]
-        else:
-            return None
-
-    except FileNotFoundError:
-        print(f"Error: {channel} not found.")
-
-
-def read_from_json_all():
-    channel = config["simulation"]["channel"]
-    try:
-        with open(channel, "r") as file:
-            file_content = file.read()
-            try:
-                messages = json.loads(file_content)
-            except json.JSONDecodeError as e:
-                print(f"Error decoding JSON: {e}")
-                return
-
-        previous_ts = None
-        for message in messages:
-            if message.get("name") == "Unknown":
-                continue
-
-            msg_ts = message.get("timestamp")
-            if msg_ts is None:
-                can_receive_time = time_ns()
-                yield message, can_receive_time
-                continue
-
-            try:
-                msg_ts = float(msg_ts)
-            except Exception:
-                can_receive_time = time_ns()
-                yield message, can_receive_time
-                continue
-
-            if previous_ts is None:
-                can_receive_time = time_ns()
-                yield message, can_receive_time
-                previous_ts = msg_ts
-                continue
-
-            # compute delay as difference between this message and previous message
-            delay_sec = msg_ts - previous_ts
-
-            # clamp negative/zero delays to a tiny positive value to avoid busy loops
-            if delay_sec <= 0:
-                delay_sec = 0.000001
-
-            # sleep for the exact delay
-            print(f"Sleeping for {delay_sec:.6f} seconds to simulate original timing")
-            time.sleep(delay_sec)
-
-            can_receive_time = time_ns()
-            yield message, can_receive_time
-
-            previous_ts = msg_ts
-
-    except FileNotFoundError:
-        print(f"Error: {channel} not found.")
-
-
-async def read_from_json_all_async():
+async def async_read_json():
     channel = config["simulation"]["channel"]
     try:
         with open(channel, "r") as file:
