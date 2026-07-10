@@ -46,6 +46,7 @@ async def main(qos: int, output: str, setting: str):
         )
     except asyncio.TimeoutError:
         await dispatcher.shutdown()
+        await coapSender.shutdown()
         print("Timeout reached, stopping client...")
 
 

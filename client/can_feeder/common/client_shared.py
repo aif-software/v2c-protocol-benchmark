@@ -21,7 +21,7 @@ async def start_client(dispatcher, output, qos, mode="normal", setting="simulati
             await dispatcher.start_coap()
 
         if setting == "simulation":
-            async for msg, can_received_time in can_reader.read_from_json_all_async():
+            async for msg, can_received_time in can_reader.async_read_json():
                 await handle_message(
                     msg=msg,
                     can_received_time=can_received_time,
@@ -44,10 +44,7 @@ async def start_client(dispatcher, output, qos, mode="normal", setting="simulati
             print('Invalid setting. Use either "simulation" or "can"')
 
     except asyncio.CancelledError:
-        print("Code execution was interrupted by program")
-        time_stopped = time.time()
-    except KeyboardInterrupt:
-        print("Code execution was interrupted by user")
+        print("Code execution was interrupted")
         time_stopped = time.time()
     finally:
         time_stopped = time.time()

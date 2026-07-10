@@ -64,6 +64,8 @@ class COAPSender:
         message_name: str,
         signal_name: str,
         data: dict,
+        unit,
+        qos,
         timestamp: float,
         latency_metrics=None,
     ):
