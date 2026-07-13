@@ -1,5 +1,4 @@
 ---
-
 # InfluxDB deployment
 apiVersion: apps/v1
 kind: Deployment
@@ -53,7 +52,6 @@ spec:
   resources:
     requests:
       storage: 6Gi
-
 ---
 # Basic service for influxDB
 apiVersion: v1
@@ -70,10 +68,7 @@ spec:
     - protocol: TCP
       port: 8086
       targetPort: 8086
-
 ---
-
-
 # Basic route for influxDB
 apiVersion: route.openshift.io/v1 # have to use this route for rahti specifically
 kind: Route
@@ -90,6 +85,4 @@ spec:
     targetPort: 8086 # route from 443 to 8086
   tls:
     termination: edge
-
-
 ---

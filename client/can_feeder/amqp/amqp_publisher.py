@@ -7,6 +7,7 @@ import ssl
 from dotenv import load_dotenv
 from pathlib import Path
 
+
 class AMQPSender:
     def __init__(self, qos, config, cert_path):
         self.qos = qos
@@ -20,16 +21,13 @@ class AMQPSender:
         broker: str = self.config["client_settings"]["server_address"]
         port: int = self.config["client_settings"]["server_port"]
 
-
         secrets_path = Path(__file__).resolve().parents[3] / "secrets.env"
         load_dotenv(secrets_path)
         if self.connection is None:
             print(f"Connecting to address: {broker}:{port}")
             try:
                 self.context = ssl.create_default_context()
-                self.context.load_verify_locations(
-                    cafile=self.cert_path
-                )
+                self.context.load_verify_locations(cafile=self.cert_path)
                 self.context.check_hostname = False
                 self.context.verify_mode = ssl.CERT_REQUIRED
 
@@ -37,8 +35,8 @@ class AMQPSender:
                     host=broker,
                     port=port,
                     loop=asyncio.get_event_loop(),
-                    login = os.getenv("RABBITMQ_DEFAULT_USER"),
-                    password = os.getenv("RABBITMQ_DEFAULT_PASS"),
+                    login=os.getenv("RABBITMQ_DEFAULT_USER"),
+                    password=os.getenv("RABBITMQ_DEFAULT_PASS"),
                     ssl=True,
                     ssl_context=self.context,
                 )
@@ -48,7 +46,7 @@ class AMQPSender:
 
                 routing_key = "test_queue"
 
-                publisher_confirms = self.qos >= 1  # qos 1 = true, 0 = false
+                publisher_confirms = self.qos == 1  # qos 1 = true, 0 = false
 
                 self.channel = await self.connection.channel(
                     publisher_confirms=publisher_confirms
@@ -111,7 +109,13 @@ class AMQPSender:
             return_codes.append("ERROR")
             return return_codes
 
-        routing_key = self.config["client_settings"]["topic"] + "." + message_name + "." + signal_name
+        routing_key = (
+            self.config["client_settings"]["topic"]
+            + "."
+            + message_name
+            + "."
+            + signal_name
+        )
         print(
             "Publishing: ",
             payload_bytes.decode("utf-8"),

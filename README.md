@@ -39,7 +39,16 @@ setup can change so ask your provider how to set up LoadBalancer service.
   oc create -f server/influx/influx.yaml
   ```
 
-- Go to the deployed influxDB, and complete the onboarding, and create the required buckets. (The naming convention for buckets is protocol_bucketqos. for example, http_bucket0 or mqtt_bucket2).
+- Go to the deployed influxDB, and complete the onboarding, and create the required buckets: 
+  - amqp_bucket0
+  - amqp_bucket1
+  - coap_bucket0
+  - coap_bucket1
+  - http_bucket0
+  - http3_bucket0
+  - mqtt_bucket0
+  - mqtt_bucket1
+  - mqtt_bucket2
 
 ##### 2. Setup the clock offset calculator by running:
 ```bash
