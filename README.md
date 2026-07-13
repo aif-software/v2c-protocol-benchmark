@@ -44,7 +44,7 @@ setup can change so ask your provider how to set up LoadBalancer service.
   - amqp_bucket1
   - coap_bucket0
   - coap_bucket1
-  - http_bucket0
+  - http2_bucket0
   - http3_bucket0
   - mqtt_bucket0
   - mqtt_bucket1
