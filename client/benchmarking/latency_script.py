@@ -312,7 +312,6 @@ def calculate_latency_chunked(
                 query = f"""from(bucket: "{bucket}")
                 |> range(start: {cur.isoformat()}, stop: {nxt.isoformat()})
                 |> pivot(rowKey: ["_time", "_measurement"], columnKey: ["_field"], valueColumn: "_value")
-                
                 """
 
                 if max_rows_per_chunk is not None:
