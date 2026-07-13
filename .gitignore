@@ -6,4 +6,4 @@ dbc
 *.env
 raw_benchmarking
 certs
-data/can_dump.json
+data/candump.*
