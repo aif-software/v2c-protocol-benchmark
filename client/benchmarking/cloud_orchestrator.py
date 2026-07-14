@@ -10,7 +10,6 @@ from dataclasses import dataclass
 
 class Orchestrator:
     def __init__(self, namespace):
-
         config_path = Path(__file__).parent / "benchmark_config.json"
         with open(config_path, "r", encoding="utf-8") as f:
             self.settings_config = json.load(f)
