@@ -5,7 +5,6 @@ from kubernetes.dynamic.exceptions import ConflictError, ApiException, NotFoundE
 import yaml
 import json
 from pathlib import Path
-from dataclasses import dataclass
 
 
 class Orchestrator:
@@ -126,7 +125,7 @@ class Orchestrator:
 
     def deploy_protocol_setup(self, protocol: str, qos):
         deployment_manifest_paths = self.settings_config["yaml_paths"].get(protocol)
-        PROJECT_ROOT = Path(__file__).resolve().parents[2]
+        PROJECT_ROOT = Path(__file__).resolve().parents[1]
         for deployment_manifest_path in deployment_manifest_paths:
             deployment_manifest_path = f"{PROJECT_ROOT}/{deployment_manifest_path}"
 

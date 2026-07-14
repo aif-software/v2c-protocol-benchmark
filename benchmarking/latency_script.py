@@ -349,10 +349,10 @@ def calculate_latency_chunked(
 
 def initialise_client():
 
-    env_path = Path(__file__).resolve().parents[2] / "config.env"
-    load_dotenv(env_path)
+    config_path = Path(__file__).resolve().parents[1] / "config.env"
+    load_dotenv(config_path)
 
-    secrets_path = Path(__file__).resolve().parents[2] / "secrets.env"
+    secrets_path = Path(__file__).resolve().parents[1] / "secrets.env"
     load_dotenv(secrets_path)
 
     influx_address = f"{os.getenv('TSDB_PROTOCOL')}://{os.getenv('TSDB_URL')}:{os.getenv('TSDB_PORT')}"

@@ -11,12 +11,9 @@ from datetime import datetime
 from pathlib import Path
 
 # NOTE: Custom code imports.
-from client.benchmarking.latency_script import (
-    calculate_latency_chunked,
-    summarize_local_pub,
-)
-from client.benchmarking.cloud_orchestrator import Orchestrator
-from client.benchmarking.calc_offset import run_offset_calc
+from benchmarking.latency_script import calculate_latency_chunked, summarize_local_pub
+from benchmarking.cloud_orchestrator import Orchestrator
+from benchmarking.calc_offset import run_offset_calc
 
 
 # Basically the "main" functionality of function
@@ -26,8 +23,7 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
     PROJECT_ROOT = Path(__file__).resolve().parent
 
     # Set config path to be in same folder
-    # NOTE: Should this be moved to own folder?
-    config_path = PROJECT_ROOT / "client" / "benchmarking" / "benchmark_config.json"
+    config_path = PROJECT_ROOT / "benchmarking" / "benchmark_config.json"
 
     # Load config
     with open(config_path, "r", encoding="utf-8") as f:
@@ -45,7 +41,7 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
 
     # Define what python environment to use and where to find client codes.
     python_exec = PROJECT_ROOT / f"{str(config["general"]["venv_path"])}/bin/python"
-    client_root = PROJECT_ROOT / "client/can_feeder"
+    client_root = PROJECT_ROOT / "client"
 
     # Set up protocols
     if protocol is None:
