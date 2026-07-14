@@ -5,6 +5,7 @@ from time import time_ns
 import asyncio
 import aiomqtt
 
+
 class MQTTAsyncSenderAioMQTT:
     def __init__(self, qos, config, cert_path):
         self.config = config
@@ -25,8 +26,10 @@ class MQTTAsyncSenderAioMQTT:
             max_inflight_messages=int(self.config["client_settings"]["window"]),
             max_concurrent_outgoing_calls=int(self.config["client_settings"]["window"]),
             transport="tcp",
-            socket_options=[(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),
-        (socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)]
+            socket_options=[
+                (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),
+                (socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),
+            ],
         )
 
         await self.client.__aenter__()
@@ -43,7 +46,7 @@ class MQTTAsyncSenderAioMQTT:
         signal_name: str,
         data: dict,
         timestamp: float,
-        unit: str = None,
+        unit: str = "",
         qos: int = 0,
         latency_metrics=None,
     ):

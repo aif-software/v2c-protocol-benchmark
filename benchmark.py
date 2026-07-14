@@ -43,164 +43,146 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
     python_exec = PROJECT_ROOT / f"{str(config["general"]["venv_path"])}/bin/python"
     client_root = PROJECT_ROOT / "client"
 
-    # Set up protocols
-    if protocol is None:
-        protocol_order = {
-            "http3": [0],
-            "amqp": [0, 1],
-            "http2": [0],
-            "coap": [0, 1],
-            "mqtt": [0, 1, 2],
-        }
-    else:
-        protocol_order = {protocol: [qos]}
+    print(f"Starting benchmark for protocol={protocol} qos={qos}")
+    try:
+        results_dir = f"raw_benchmarking/results/{protocol}_{timestamp}_QOS_{qos}"
+        config["client_settings"]["path"] = results_dir
+        os.makedirs(results_dir, exist_ok=True)
 
-    # Go through the different protocols...
-    for protocol, qos_list in protocol_order.items():
-        # ...and corresponding qos settings.
-        for qos in qos_list:
-            print(f"Starting benchmark for protocol={protocol} qos={qos}")
+        orchestrator.delete_protocol_setup(protocol)
+
+        orchestrator.deploy_protocol_setup(protocol, qos)
+        time.sleep(5)  # delay to give time for cloud deployment to startup
+
+        bucket: str = f"{protocol}_bucket{qos}"
+        output_file = f"{results_dir}/{protocol}_results_qos_{qos}.csv"
+        file_name_base = f"{results_dir}/{protocol}_test_{int(time.time())}"
+
+        summary_output_file = f"{file_name_base}_summary.txt"
+        start_time = datetime.now().replace(tzinfo=None).isoformat() + "Z"
+
+        # start concurrent hardware metrics logging
+        # TODO: update args to kwargs for consistency.
+        oc_stop = threading.Event()
+        oc_thread = threading.Thread(
+            target=get_hardware_metrics,
+            args=(f"{results_dir}/hardware_metrics.txt", 5, oc_stop),
+            daemon=True,
+        )
+        oc_thread.start()
+
+        # start concurrent network metrics logging
+        vn_stop = threading.Event()
+        vn_log_path = f"{results_dir}/vnstat_continuous.txt"
+        print(
+            "Logging VnStat:",
+            orchestrator.get_endpoint_pod_name(protocol=protocol),
+        )
+        vn_thread = threading.Thread(
+            target=get_network_metrics,
+            kwargs=dict(
+                duration=5,
+                out_path=vn_log_path,
+                pod=orchestrator.get_endpoint_pod_name(protocol=protocol),
+                container="vnstat",
+                iface="eth0",
+                stop_event=vn_stop,
+            ),
+            daemon=True,
+        )
+        vn_thread.start()
+
+        # start concurrent client for clock_offset_calculator.
+        offset_stop = threading.Event()
+        offset_thread = threading.Thread(
+            target=run_offset_calc,
+            kwargs=dict(
+                url=clock_offset_address,
+                output_file=f"{file_name_base}_offset.txt",
+                interval=1,
+                stop_event=offset_stop,
+            ),
+            daemon=True,
+        )
+
+        offset_thread.start()
+
+        proc = subprocess.Popen(
+            [
+                str(python_exec),
+                f"{str(client_root)}/{protocol}/{protocol}_main.py",
+                "--qos",
+                str(qos),
+                "--output",
+                f"{file_name_base}_summary.txt",
+                "--setting",
+                setting,
+            ]
+        )
+
+        try:
+            proc.wait()
+        except KeyboardInterrupt:
+            print("SIGINT, stop client gracefully")
+            proc.send_signal(signal.SIGINT)
             try:
-                results_dir = (
-                    f"raw_benchmarking/results/{protocol}_{timestamp}_QOS_{qos}"
-                )
-                config["client_settings"]["path"] = results_dir
-                os.makedirs(results_dir, exist_ok=True)
+                proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                print("Child didnt exit in time, forcing kill.")
+                proc.kill()
 
-                orchestrator.delete_protocol_setup(protocol)
+        # TODO: Make up a better way to do this
+        print("Waiting 10s for metrics logging to run")
+        time.sleep(10)
 
-                orchestrator.deploy_protocol_setup(protocol, qos)
-                time.sleep(5)  # delay to give time for cloud deployment to startup
+        # stop concurrent logging
+        oc_stop.set()
+        oc_thread.join(timeout=2)
 
-                bucket: str = f"{protocol}_bucket{qos}"
-                output_file = f"{results_dir}/{protocol}_results_qos_{qos}.csv"
-                file_name_base = f"{results_dir}/{protocol}_test_{int(time.time())}"
+        vn_stop.set()
+        vn_thread.join(timeout=2)
 
-                summary_output_file = f"{file_name_base}_summary.txt"
-                start_time = datetime.now().replace(tzinfo=None).isoformat() + "Z"
+        offset_stop.set()
+        offset_thread.join(timeout=2)
 
-                # start concurrent hardware metrics logging
-                # TODO: update args to kwargs for consistency.
-                oc_stop = threading.Event()
-                oc_thread = threading.Thread(
-                    target=get_hardware_metrics,
-                    args=(f"{results_dir}/hardware_metrics.txt", 5, oc_stop),
-                    daemon=True,
-                )
-                oc_thread.start()
+        # TODO: Make up a better way to do this
+        print("Waiting 10s for influx writes to finnish")
+        time.sleep(10)  # Give time to everything to write to influx
 
-                # start concurrent network metrics logging
-                vn_stop = threading.Event()
-                vn_log_path = f"{results_dir}/vnstat_continuous.txt"
-                print(
-                    "Logging VnStat:",
-                    orchestrator.get_endpoint_pod_name(protocol=protocol),
-                )
-                vn_thread = threading.Thread(
-                    target=get_network_metrics,
-                    kwargs=dict(
-                        duration=5,
-                        out_path=vn_log_path,
-                        pod=orchestrator.get_endpoint_pod_name(protocol=protocol),
-                        container="vnstat",
-                        iface="eth0",
-                        stop_event=vn_stop,
-                    ),
-                    daemon=True,
-                )
-                vn_thread.start()
+        stop_time = datetime.now().replace(tzinfo=None).isoformat() + "Z"
+        run_dir = f"{results_dir}/run"
+        os.makedirs(run_dir, exist_ok=True)
 
-                # start concurrent client for clock_offset_calculator.
-                offset_stop = threading.Event()
-                offset_thread = threading.Thread(
-                    target=run_offset_calc,
-                    kwargs=dict(
-                        url=clock_offset_address,
-                        output_file=f"{file_name_base}_offset.txt",
-                        interval=1,
-                        stop_event=offset_stop,
-                    ),
-                    daemon=True,
-                )
+        summary_file = os.path.join(run_dir, f"run_summary.txt")
 
-                offset_thread.start()
+        with open(summary_file, "a", buffering=1) as f:
+            f.write(f"=== Benchmark run summary ===\n")
+            f.write(f"Start time: {start_time}\n")
+            f.write(f"Stop time: {stop_time}\n")
+            f.write(f"Output file: {output_file}\n")
+            f.write(f"Summary output file: {summary_output_file}\n")
+            f.write("\n")
 
-                proc = subprocess.Popen(
-                    [
-                        str(python_exec),
-                        f"{str(client_root)}/{protocol}/{protocol}_main.py",
-                        "--qos",
-                        str(qos),
-                        "--output",
-                        f"{file_name_base}_summary.txt",
-                        "--setting",
-                        setting,
-                    ]
-                )
+        # download results from influx
+        calculate_latency_chunked(
+            bucket=bucket,
+            org=config["general"]["influx_org"],
+            start_iso=start_time,
+            stop_iso=stop_time,
+            raw_output_file=output_file,
+            summary_output_file=summary_output_file,
+            window_seconds=30,
+            max_rows_per_chunk=5000,
+            sleep_between_seconds=1,
+            offset_csv=f"{file_name_base}_offset.txt",
+        )
 
-                try:
-                    proc.wait()
-                except KeyboardInterrupt:
-                    print("SIGINT, stop client gracefully")
-                    proc.send_signal(signal.SIGINT)
-                    try:
-                        proc.wait(timeout=10)
-                    except subprocess.TimeoutExpired:
-                        print("Child didnt exit in time, forcing kill.")
-                        proc.kill()
-
-                # TODO: Make up a better way to do this
-                print("Waiting 10s for metrics logging to run")
-                time.sleep(10)
-
-                # stop concurrent logging
-                oc_stop.set()
-                oc_thread.join(timeout=2)
-
-                vn_stop.set()
-                vn_thread.join(timeout=2)
-
-                offset_stop.set()
-                offset_thread.join(timeout=2)
-
-                # TODO: Make up a better way to do this
-                print("Waiting 10s for influx writes to finnish")
-                time.sleep(10)  # Give time to everything to write to influx
-
-                stop_time = datetime.now().replace(tzinfo=None).isoformat() + "Z"
-                run_dir = f"{results_dir}/run"
-                os.makedirs(run_dir, exist_ok=True)
-
-                summary_file = os.path.join(run_dir, f"run_summary.txt")
-
-                with open(summary_file, "a", buffering=1) as f:
-                    f.write(f"=== Benchmark run summary ===\n")
-                    f.write(f"Start time: {start_time}\n")
-                    f.write(f"Stop time: {stop_time}\n")
-                    f.write(f"Output file: {output_file}\n")
-                    f.write(f"Summary output file: {summary_output_file}\n")
-                    f.write("\n")
-
-                # download results from influx
-                calculate_latency_chunked(
-                    bucket=bucket,
-                    org=config["general"]["influx_org"],
-                    start_iso=start_time,
-                    stop_iso=stop_time,
-                    raw_output_file=output_file,
-                    summary_output_file=summary_output_file,
-                    window_seconds=30,
-                    max_rows_per_chunk=5000,
-                    sleep_between_seconds=1,
-                    offset_csv=f"{file_name_base}_offset.txt",
-                )
-
-                summarize_local_pub(path=summary_output_file)
-            except Exception as e:
-                print(e)
-                traceback.print_exc()
-            finally:
-                orchestrator.delete_protocol_setup(protocol)
+        summarize_local_pub(path=summary_output_file)
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
+    finally:
+        orchestrator.delete_protocol_setup(protocol)
 
 
 def get_hardware_metrics(out_path: str, interval_sec: int, stop_event: threading.Event):
