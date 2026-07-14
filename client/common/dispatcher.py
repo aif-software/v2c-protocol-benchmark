@@ -217,9 +217,10 @@ class Dispatcher:
         stop_time = time.time()
         return stop_time, shutdowned_messages
 
-    '''
+    """
     get the active count directly from aiocoap internals instead of using self.in_flight as aiocoap not using the dispatcher's semaphore for limiting inflight
-    '''
+    """
+
     def get_coap_inflight(self):
         total = 0
         for tman in self.coap_context.request_interfaces:
