@@ -26,7 +26,7 @@
     "window": 100,
     "workers": 100,
     "queue_maxsize": 1000000,
-    "duration": 10,
+    "duration": 30,
     "path": "",
     "timeout": 10
   },
