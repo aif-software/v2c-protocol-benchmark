@@ -7,7 +7,7 @@ import argparse
 import os
 import signal
 import traceback
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 
 # NOTE: Custom code imports.
@@ -32,9 +32,6 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
     # Get clock offset address. The /sync needs to be included in the address.
     clock_offset_address = config["client_settings"]["clock_offset_address"]
 
-    # Create timestamps from this moment in format described in strftime().
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
     # Get rahti project from config and creat orchestrator.
     rahti_project = config["server_settings"]["rahti_project"]
     orchestrator = Orchestrator(rahti_project)
@@ -45,6 +42,8 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
 
     print(f"Starting benchmark for protocol={protocol} qos={qos}")
     try:
+        # Create timestamps from this moment in format described in strftime().
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         results_dir = f"raw_benchmarking/results/{protocol}_{timestamp}_QOS_{qos}"
         config["client_settings"]["path"] = results_dir
         os.makedirs(results_dir, exist_ok=True)
@@ -59,7 +58,7 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
         file_name_base = f"{results_dir}/{protocol}_test_{int(time.time())}"
 
         summary_output_file = f"{file_name_base}_summary.txt"
-        start_time = datetime.now().replace(tzinfo=None).isoformat() + "Z"
+        start_time = datetime.now(UTC).replace(tzinfo=None).isoformat() + "Z"
 
         # start concurrent hardware metrics logging
         # TODO: update args to kwargs for consistency.
@@ -145,11 +144,8 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
         offset_stop.set()
         offset_thread.join(timeout=2)
 
-        # TODO: Make up a better way to do this
-        print("Waiting 10s for influx writes to finnish")
-        time.sleep(10)  # Give time to everything to write to influx
+        stop_time = datetime.now(UTC).replace(tzinfo=None).isoformat() + "Z"
 
-        stop_time = datetime.now().replace(tzinfo=None).isoformat() + "Z"
         run_dir = f"{results_dir}/run"
         os.makedirs(run_dir, exist_ok=True)
 
@@ -164,6 +160,7 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
             f.write("\n")
 
         # download results from influx
+        # NOTE: Now this function will sleep for 15s and retry the query if no results are found.
         calculate_latency_chunked(
             bucket=bucket,
             org=config["general"]["influx_org"],
