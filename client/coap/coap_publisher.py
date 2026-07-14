@@ -29,7 +29,7 @@ class COAPSender:
         self.transport_tuning = TransportTuning()
 
     async def connect(self):
-        secrets_path = Path(__file__).resolve().parents[3] / "secrets.env"
+        secrets_path = Path(__file__).resolve().parents[2] / "secrets.env"
         load_dotenv(secrets_path)
 
         self.topic = self.config["client_settings"]["topic"]

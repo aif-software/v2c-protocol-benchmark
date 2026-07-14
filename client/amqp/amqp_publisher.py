@@ -21,7 +21,7 @@ class AMQPSender:
         broker: str = self.config["client_settings"]["server_address"]
         port: int = self.config["client_settings"]["server_port"]
 
-        secrets_path = Path(__file__).resolve().parents[3] / "secrets.env"
+        secrets_path = Path(__file__).resolve().parents[2] / "secrets.env"
         load_dotenv(secrets_path)
         if self.connection is None:
             print(f"Connecting to address: {broker}:{port}")
