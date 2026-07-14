@@ -12,7 +12,7 @@
   },
   "simulation": {
     "interface": "file",
-    "channel": "data/can_dump.json",
+    "channel": "data/candump.json",
     "delay": 0,
     "database": ""
   },
@@ -26,7 +26,7 @@
     "window": 100,
     "workers": 100,
     "queue_maxsize": 1000000,
-    "duration": 60,
+    "duration": 10,
     "path": "",
     "timeout": 10
   },

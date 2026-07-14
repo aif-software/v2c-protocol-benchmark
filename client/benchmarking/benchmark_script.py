@@ -160,6 +160,7 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
                 offset_stop.set()
                 offset_thread.join(timeout=2)
 
+                time.sleep(15)  # Give time to everything to write to influx
                 stop_time = datetime.now().replace(tzinfo=None).isoformat() + "Z"
                 run_dir = f"{results_dir}/run"
                 os.makedirs(run_dir, exist_ok=True)

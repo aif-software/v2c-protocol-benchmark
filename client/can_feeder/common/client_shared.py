@@ -3,6 +3,7 @@ import asyncio
 import json
 from time import time_ns
 import time
+
 import can_reader
 import itertools
 from uuid import uuid4
@@ -45,7 +46,6 @@ async def start_client(dispatcher, output, qos, mode="normal", setting="simulati
 
     except asyncio.CancelledError:
         print("Code execution was interrupted")
-        time_stopped = time.time()
     finally:
         time_stopped = time.time()
 
