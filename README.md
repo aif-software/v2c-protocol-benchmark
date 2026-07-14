@@ -135,18 +135,12 @@ oc create configmap app-config --from-env-file=config.env --dry-run=client -o ya
 
 ## Usage
 
-- To run the benchmark, run the [client/benchmarking/benchmark_script.py](client/benchmarking/benchmark_script.py) script. 
+- To run the benchmark, run the [benchmark.py](benchmark.py) script. 
 - Pass the arguments:
   --protocol (mqtt, coap, amqp, http2, or http3)
   --qos (0,1,2)
   --setting ("simulation" or "can")
 - Example: 
     ```bash
-    python3 client/benchmarking/benchmark_script.py --protocol=mqtt --qos=1 --setting=simulation
-    ```
-
-- If you want to run all protocols, just leave out the `--protocol` and `--qos` arguments.
-- Example:
-    ```bash
-    python3 client/benchmarking/benchmark_script.py
+    python3 benchmark.py mqtt --qos=1 --setting=simulation
     ```

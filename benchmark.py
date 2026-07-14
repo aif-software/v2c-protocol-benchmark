@@ -7,24 +7,27 @@ import argparse
 import os
 import signal
 import traceback
-from datetime import datetime, UTC
+from datetime import datetime
 from pathlib import Path
 
 # NOTE: Custom code imports.
-from latency_script import calculate_latency_chunked, summarize_local_pub
-from cloud_orchestrator import Orchestrator
-from calc_offset import run_offset_calc
+from client.benchmarking.latency_script import (
+    calculate_latency_chunked,
+    summarize_local_pub,
+)
+from client.benchmarking.cloud_orchestrator import Orchestrator
+from client.benchmarking.calc_offset import run_offset_calc
 
 
 # Basically the "main" functionality of function
 def run_benchmark(protocol, qos=0, setting="simulation"):
 
     # Set project root to be 2 folders down.
-    PROJECT_ROOT = Path(__file__).resolve().parents[2]
+    PROJECT_ROOT = Path(__file__).resolve().parent
 
     # Set config path to be in same folder
     # NOTE: Should this be moved to own folder?
-    config_path = Path(__file__).parent / "benchmark_config.json"
+    config_path = PROJECT_ROOT / "client" / "benchmarking" / "benchmark_config.json"
 
     # Load config
     with open(config_path, "r", encoding="utf-8") as f:
@@ -150,6 +153,10 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
                         print("Child didnt exit in time, forcing kill.")
                         proc.kill()
 
+                # TODO: Make up a better way to do this
+                print("Waiting 10s for metrics logging to run")
+                time.sleep(10)
+
                 # stop concurrent logging
                 oc_stop.set()
                 oc_thread.join(timeout=2)
@@ -160,7 +167,10 @@ def run_benchmark(protocol, qos=0, setting="simulation"):
                 offset_stop.set()
                 offset_thread.join(timeout=2)
 
-                time.sleep(15)  # Give time to everything to write to influx
+                # TODO: Make up a better way to do this
+                print("Waiting 10s for influx writes to finnish")
+                time.sleep(10)  # Give time to everything to write to influx
+
                 stop_time = datetime.now().replace(tzinfo=None).isoformat() + "Z"
                 run_dir = f"{results_dir}/run"
                 os.makedirs(run_dir, exist_ok=True)
@@ -262,14 +272,11 @@ def get_network_metrics(
             time.sleep(0.1)
 
 
-# NOTE: It would be good to think if we need the protocols to EVER run sequantially. Would that be good for the tests or not? IMO not because then the tests are not controlled and can be exposed to confounding factors like the position of the network base station, the level of the terrain, direction of movement and such. Other opinions neede on this matter.
-
-
 def main():
+    # TODO: Split arguments to subcommands based on the used protocol
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-p",
-        "--protocol",
+        "protocol",
         choices=[
             "mqtt",
             "amqp",
@@ -284,7 +291,7 @@ def main():
         "-q",
         "--qos",
         type=int,
-        default=None,
+        default=0,
         help="Quality of Service level",
     )
     parser.add_argument(
