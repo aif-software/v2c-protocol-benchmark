@@ -52,6 +52,8 @@ async def start_client(dispatcher, output, qos, mode="normal", setting="simulati
         await asyncio.sleep(1)
 
         stopped, shutdowned_messages = await dispatcher.shutdown()
+
+        print(f"Appending file {output}")
         log_file = open(output, "a")
 
         for s in shutdowned_messages:

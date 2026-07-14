@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-_logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.ERROR)
 logging.getLogger("aiocoap").setLevel(logging.ERROR)
 logging.getLogger("aiocoap.message-manager").setLevel(logging.DEBUG)
@@ -64,9 +63,9 @@ class COAPSender:
         message_name: str,
         signal_name: str,
         data: dict,
-        unit,
-        qos,
         timestamp: float,
+        unit: str = "",
+        qos: int = 0,
         latency_metrics=None,
     ):
         """
