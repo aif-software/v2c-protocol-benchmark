@@ -5,16 +5,13 @@ import json
 import logging
 import time
 import cantools.database
-import cantools.database.namedsignalvalue
 import sys
 from pathlib import Path
 import sys
 
-# from mqtt_publisher import SimpleMQTTMessage
-import random
 from time import time_ns
 
-_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -46,7 +43,7 @@ def create_message_entry(
     try:
         db_message = db.get_message_by_frame_id(message.arbitration_id)
         decoded = db.decode_message(message.arbitration_id, message.data)
-        _logger.debug(f"{db_message.name}: {decoded}")
+        logger.debug(f"{db_message.name}: {decoded}")
 
         try:
             return {

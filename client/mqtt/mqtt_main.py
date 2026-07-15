@@ -13,20 +13,24 @@ from common.dispatcher import Dispatcher
 
 config: dict = json.load(open(BENCHMARK_CONFIG_PATH))
 
+
 async def main(qos, output, setting):
     window = config["client_settings"]["window"]
     workers = config["client_settings"]["workers"]
     queue_maxsize = config["client_settings"]["queue_maxsize"]
+
     cert_path = str(PROJECT_ROOT / config["client_settings"]["certs_path"])
     mqttSender = MQTTAsyncSenderAioMQTT(qos=qos, config=config, cert_path=cert_path)
     await mqttSender.connect()
+
     dispatcher = Dispatcher(
         mqttSender.publish_mqtt_structured,
         window=window,
         workers=workers,
         queue_maxsize=queue_maxsize,
-        log_file=output
+        log_file=output,
     )
+
     try:
         await asyncio.wait_for(
             start_client(dispatcher, output, qos=qos, setting=setting),
@@ -40,6 +44,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--qos", type=int, default=0, help="Quality of Service level")
     parser.add_argument("--output", type=str, default="client_data.txt")
-    parser.add_argument("--setting",type=str, default="simulation")
+    parser.add_argument("--setting", type=str, default="simulation")
     args = parser.parse_args()
     asyncio.run(main(qos=args.qos, output=args.output, setting=args.setting))

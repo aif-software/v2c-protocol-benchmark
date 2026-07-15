@@ -21,15 +21,8 @@ async def main(qos, output, setting):
     queue_maxsize = config["client_settings"]["queue_maxsize"]
     cert_path = str(PROJECT_ROOT / config["client_settings"]["certs_path"])
 
-    print(cert_path)
-
     amqpSender = AMQPSender(qos=qos, config=config, cert_path=cert_path)
     connected = await amqpSender.connect()
-
-    while not connected:
-        print("Failed to connect.. retrying")
-        time.sleep(5)
-        connected = await amqpSender.connect()
 
     dispatcher = Dispatcher(
         amqpSender.publish_amqp_structured,

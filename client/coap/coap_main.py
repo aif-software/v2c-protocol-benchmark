@@ -29,7 +29,7 @@ async def main(qos: int, output: str, setting: str):
 
     coapSender = COAPSender(qos=qos, config=config, coap_context=coap_context)
     await coapSender.connect()
-    print("Connected to CoAP server.")
+
     dispatcher = Dispatcher(
         coapSender.post_coap_structured,
         window=window,
@@ -45,7 +45,6 @@ async def main(qos: int, output: str, setting: str):
             timeout=config["client_settings"]["duration"],
         )
     except asyncio.TimeoutError:
-        await dispatcher.shutdown()
         print("Timeout reached, stopping client...")
 
 

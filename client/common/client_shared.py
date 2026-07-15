@@ -46,10 +46,8 @@ async def start_client(dispatcher, output, qos, mode="normal", setting="simulati
 
     except asyncio.CancelledError:
         print("Code execution was interrupted")
-    finally:
-        time_stopped = time.time()
 
-        await asyncio.sleep(1)
+        time_stopped = time.time()
 
         stopped, shutdowned_messages = await dispatcher.shutdown()
 
@@ -69,6 +67,8 @@ async def start_client(dispatcher, output, qos, mode="normal", setting="simulati
             "Average sent rate:" + str(round(dispatcher.can_read_rate)) + "\n"
         )
         log_file.flush()
+
+        raise
 
 
 async def handle_message(msg, can_received_time, dispatcher, qos):
@@ -116,27 +116,4 @@ async def handle_message(msg, can_received_time, dispatcher, qos):
             "pre_decode_time": pre_decode_time,
             "post_decode_time": post_decode_time,
         },
-    )
-
-
-async def publish_can_data_structured(
-    protocol_publisher,
-    msg_id,
-    message_name: str,
-    signal_name: str,
-    data: dict,
-    timestamp: float,
-    unit: str | None = None,
-    qos: int = 0,
-    latency_metrics=None,
-):
-    return await protocol_publisher(
-        msg_id,
-        message_name,
-        signal_name,
-        data,
-        timestamp,
-        unit,
-        qos,
-        latency_metrics,
     )
