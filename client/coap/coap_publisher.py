@@ -27,26 +27,14 @@ class COAPSender:
         self.topic = None
         self.transport_tuning = TransportTuning()
 
-    async def connect(self):
-        secrets_path = Path(__file__).resolve().parents[2] / "secrets.env"
-        load_dotenv(secrets_path)
-
-        self.topic = self.config["client_settings"]["topic"]
-
-        self.broker = self.config["client_settings"]["server_address"]
-        self.port = self.config["client_settings"]["server_port"]
-
+    async def initialize(self):
         try:
-            self.coap_context.client_credentials.load_from_dict(
-                {
-                    f"coaps://{self.broker}:{self.port}/*": {
-                        "dtls": {
-                            "psk": os.getenv("COAPS_PSK_KEY").encode(),
-                            "client-identity": os.getenv("COAPS_PSK_IDENTITY").encode(),
-                        }
-                    }
-                }
-            )
+            secrets_path = Path(__file__).resolve().parents[2] / "secrets.env"
+            load_dotenv(secrets_path)
+
+            self.topic = self.config["client_settings"]["topic"]
+            self.broker = self.config["client_settings"]["server_address"]
+            self.port = self.config["client_settings"]["server_port"]
             print(
                 f"CoAP client context initialized for server {self.broker}:{self.port}"
             )
@@ -79,7 +67,7 @@ class COAPSender:
         """
 
         latency_metrics["publish_time"] = time_ns()
-        coap_full_uri = f"coaps://{self.broker}:{self.port}/can"
+        coap_full_uri = f"coap://{self.broker}:{self.port}/can"
 
         payload = {
             "msg_id": msg_id,

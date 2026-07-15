@@ -24,11 +24,11 @@ async def main(qos: int, output: str, setting: str):
     workers = int(config["client_settings"]["workers"])
     queue_maxsize = int(config["client_settings"]["queue_maxsize"])
 
-    transports = ["tinydtls"]
+    transports = ["udp6"]
     coap_context = await aiocoap.Context.create_client_context(transports=transports)
 
     coapSender = COAPSender(qos=qos, config=config, coap_context=coap_context)
-    await coapSender.connect()
+    await coapSender.initialize()
 
     dispatcher = Dispatcher(
         coapSender.post_coap_structured,

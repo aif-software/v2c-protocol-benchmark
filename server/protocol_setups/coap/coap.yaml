@@ -96,13 +96,9 @@ spec:
   selector:
     app: coap-server # link service to all pods
   ports:
-    - name: coaps-udp # dtls
-      protocol: UDP
-      port: 30686
-      targetPort: 5684
     - name: coap-udp
       protocol: UDP
-      port: 30684
+      port: 30686
       targetPort: 5683
     - name: iperf3-tcp # open port for iperf3 server inside same pod
       protocol: TCP

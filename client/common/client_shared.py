@@ -49,10 +49,10 @@ async def start_client(dispatcher, output, qos, mode="normal", setting="simulati
 
         time_stopped = time.time()
 
-        stopped, shutdowned_messages = await dispatcher.shutdown()
-
-        print(f"Writing remaining data to {output}")
         try:
+            stopped, shutdowned_messages = await dispatcher.shutdown()
+
+            print(f"Writing remaining data to {output}")
             with open(output, "a") as log_file:
 
                 for s in shutdowned_messages:
