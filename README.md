@@ -52,7 +52,7 @@ setup can change so ask your provider how to set up LoadBalancer service.
 
 ##### 2. Setup the clock offset calculator by running:
 ```bash
-oc create -f clock_offset_calculator/offset.yaml 
+oc create -f server/clock_offset_calculator/offset.yaml 
   ```
 
 ##### 3. Protocol setups
