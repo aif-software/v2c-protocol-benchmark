@@ -135,7 +135,6 @@ class Orchestrator:
                 for manifest in deployment_manifest:
                     if manifest is None:
                         continue
-                    # print(manifest)
                     if manifest["kind"] == "Deployment":
                         for container in manifest["spec"]["template"]["spec"][
                             "containers"
@@ -201,11 +200,6 @@ class Orchestrator:
                                 else:
                                     print(f"Error fetching deployment status: {e}")
                                     time.sleep(5)
-                            except NotFoundError:
-                                print(
-                                    f"Deployment {manifest['metadata']['name']} not found, waiting..."
-                                )
-                                time.sleep(5)
 
                     except ConflictError as e:
                         print(f"Already exists: {manifest['kind']}")
