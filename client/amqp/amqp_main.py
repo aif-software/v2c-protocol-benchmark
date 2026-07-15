@@ -38,7 +38,6 @@ async def main(qos, output, setting):
             timeout=config["client_settings"]["duration"],
         )
     except asyncio.TimeoutError:
-        dispatcher.shutdown()
         print("Timeout reached, stopping client...")
 
 

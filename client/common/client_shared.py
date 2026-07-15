@@ -51,23 +51,23 @@ async def start_client(dispatcher, output, qos, mode="normal", setting="simulati
 
         stopped, shutdowned_messages = await dispatcher.shutdown()
 
-        print(f"Appending file {output}")
-        log_file = open(output, "a")
+        print(f"Writing remaining data to {output}")
+        try:
+            with open(output, "a") as log_file:
 
-        for s in shutdowned_messages:
-            log_file.write(json.dumps(s) + "\n")
-        log_file.flush()
+                for s in shutdowned_messages:
+                    log_file.write(json.dumps(s) + "\n")
 
-        log_file.write("\n----- Final Stats -----\n")
-        log_file.write(
-            f"Cancelled at: {time_stopped}, shutdown completed at: {stopped}\n"
-        )
-        log_file.write(f"Took {stopped - time_stopped} seconds to shutdown\n")
-        log_file.write(
-            "Average sent rate:" + str(round(dispatcher.can_read_rate)) + "\n"
-        )
-        log_file.flush()
-
+                log_file.write("\n----- Final Stats -----\n")
+                log_file.write(
+                    f"Cancelled at: {time_stopped}, shutdown completed at: {stopped}\n"
+                )
+                log_file.write(f"Took {stopped - time_stopped} seconds to shutdown\n")
+                log_file.write(
+                    "Average sent rate:" + str(round(dispatcher.can_read_rate)) + "\n"
+                )
+        except Exception as e:
+            print(f"Error while writing output: {e}")
         raise
 
 
