@@ -22,16 +22,16 @@ async def start_client(callback, output, qos, coap_context=None, setting="simula
     workers = config["client_settings"]["workers"]
     queue_maxsize = config["client_settings"]["queue_maxsize"]
 
-    try:
-        dispatcher = Dispatcher(
-            sender=callback,
-            window=window,
-            workers=workers,
-            queue_maxsize=queue_maxsize,
-            log_file=output,
-            coap_context=coap_context,
-        )
+    dispatcher = Dispatcher(
+        sender=callback,
+        window=window,
+        workers=workers,
+        queue_maxsize=queue_maxsize,
+        log_file=output,
+        coap_context=coap_context,
+    )
 
+    try:
         await dispatcher.start()
 
         if setting == "simulation":

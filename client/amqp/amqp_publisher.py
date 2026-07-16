@@ -116,12 +116,6 @@ class AMQPSender:
             + "."
             + signal_name
         )
-        print(
-            "Publishing: ",
-            payload_bytes.decode("utf-8"),
-            " to routing key: ",
-            routing_key,
-        )
         return_codes.append("SUBMITTED")
 
         if self.qos == 0:
