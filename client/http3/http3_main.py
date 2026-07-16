@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from common.client_shared import start_client
 from common.config import BENCHMARK_CONFIG_PATH, PROJECT_ROOT
-from common.dispatcher import Dispatcher
+from common.dispatcherv2 import Dispatcher
 
 config: dict = json.load(open(BENCHMARK_CONFIG_PATH))
 
@@ -48,7 +48,7 @@ async def main(output, setting):
             window=window,
             workers=workers,
             queue_maxsize=queue_maxsize,
-            log_file=output
+            log_file=output,
         )
 
         try:
@@ -60,10 +60,11 @@ async def main(output, setting):
         except asyncio.TimeoutError:
             print("Timeout reached, stopping client...")
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--qos", type=int, default=0, help="Quality of Service level")
     parser.add_argument("--output", type=str, default="client_data.txt")
-    parser.add_argument("--setting",type=str, default="simulation")
+    parser.add_argument("--setting", type=str, default="simulation")
     args = parser.parse_args()
     asyncio.run(main(output=args.output, setting=args.setting))

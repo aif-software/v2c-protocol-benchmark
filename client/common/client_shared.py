@@ -16,10 +16,7 @@ async def start_client(dispatcher, output, qos, mode="normal", setting="simulati
     try:
         log_file = open(output, "w")
 
-        if mode == "normal":
-            await dispatcher.start()
-        elif mode == "coap":
-            await dispatcher.start_coap()
+        await dispatcher.start()
 
         if setting == "simulation":
             async for msg, can_received_time in can_reader.async_read_json():

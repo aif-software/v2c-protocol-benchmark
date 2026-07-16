@@ -1,6 +1,5 @@
 import argparse
 import json
-import time
 from amqp_publisher import AMQPSender
 import asyncio
 from pathlib import Path
@@ -10,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from common.client_shared import start_client
 from common.config import BENCHMARK_CONFIG_PATH, PROJECT_ROOT
-from common.dispatcher import Dispatcher
+from common.dispatcherv2 import Dispatcher
 
 config: dict = json.load(open(BENCHMARK_CONFIG_PATH))
 
@@ -22,7 +21,7 @@ async def main(qos, output, setting):
     cert_path = str(PROJECT_ROOT / config["client_settings"]["certs_path"])
 
     amqpSender = AMQPSender(qos=qos, config=config, cert_path=cert_path)
-    connected = await amqpSender.connect()
+    await amqpSender.connect()
 
     dispatcher = Dispatcher(
         amqpSender.publish_amqp_structured,

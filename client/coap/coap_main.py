@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from common.client_shared import start_client
-from common.dispatcher import Dispatcher
+from common.dispatcherv2 import Dispatcher
 from common.config import BENCHMARK_CONFIG_PATH
 
 config: dict = json.load(open(BENCHMARK_CONFIG_PATH))
