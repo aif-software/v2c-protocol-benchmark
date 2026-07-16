@@ -1,3 +1,10 @@
+"""
+The purpose of this module is to create centralized handling of different
+protocol implementations and combine them with the dispatcher. Basically
+all protocols existing and to be implemented should call this class by
+passing a callback which handles the network part of the implementation.
+"""
+
 import ast
 import asyncio
 import json
@@ -14,9 +21,13 @@ from common.config import BENCHMARK_CONFIG_PATH
 RUN_ID = uuid4().hex
 MESSAGE_ID = itertools.count(1)
 
+config: dict = json.load(open(BENCHMARK_CONFIG_PATH))
 
+
+# NOTE: Dispatcher was moved under shared client so that is it not required to be
+# created in protocol implementations. This is better also because the shared client
+# was in the end the module responsible for handling the usage of the dispatcher.
 async def start_client(callback, output, qos, coap_context=None, setting="simulation"):
-    config: dict = json.load(open(BENCHMARK_CONFIG_PATH))
 
     window = config["client_settings"]["window"]
     workers = config["client_settings"]["workers"]
