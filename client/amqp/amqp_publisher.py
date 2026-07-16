@@ -150,3 +150,10 @@ class AMQPSender:
                 return_codes.append("UNKNOWN")
 
         return return_codes
+
+    async def shutdown(self):
+        try:
+            if self.connection is not None:
+                await self.connection.close()
+        except Exception as e:
+            print(f"Error while closing amqp: {e}")

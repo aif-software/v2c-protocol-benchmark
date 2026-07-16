@@ -8,13 +8,29 @@ import can_reader
 import itertools
 from uuid import uuid4
 
+from common.dispatcherv2 import Dispatcher
+from common.config import BENCHMARK_CONFIG_PATH
+
 RUN_ID = uuid4().hex
 MESSAGE_ID = itertools.count(1)
 
 
-async def start_client(dispatcher, output, qos, mode="normal", setting="simulation"):
+async def start_client(callback, output, qos, coap_context=None, setting="simulation"):
+    config: dict = json.load(open(BENCHMARK_CONFIG_PATH))
+
+    window = config["client_settings"]["window"]
+    workers = config["client_settings"]["workers"]
+    queue_maxsize = config["client_settings"]["queue_maxsize"]
+
     try:
-        log_file = open(output, "w")
+        dispatcher = Dispatcher(
+            sender=callback,
+            window=window,
+            workers=workers,
+            queue_maxsize=queue_maxsize,
+            log_file=output,
+            coap_context=coap_context,
+        )
 
         await dispatcher.start()
 

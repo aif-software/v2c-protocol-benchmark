@@ -13,15 +13,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from common.client_shared import start_client
 from common.config import BENCHMARK_CONFIG_PATH, PROJECT_ROOT
-from common.dispatcherv2 import Dispatcher
 
 config: dict = json.load(open(BENCHMARK_CONFIG_PATH))
 
 
 async def main(output, setting):
-    window = config["client_settings"]["window"]
-    workers = config["client_settings"]["workers"]
-    queue_maxsize = config["client_settings"]["queue_maxsize"]
     broker: str = config["client_settings"]["server_address"]
     port: int = config["client_settings"]["server_port"]
     cert_path = str(PROJECT_ROOT / config["client_settings"]["certs_path"])
@@ -43,17 +39,14 @@ async def main(output, setting):
     ) as http3sender:
         print("Connected to HTTP/3 server.")
 
-        dispatcher = Dispatcher(
-            http3sender.publish_can_data_structured,
-            window=window,
-            workers=workers,
-            queue_maxsize=queue_maxsize,
-            log_file=output,
-        )
-
         try:
             await asyncio.wait_for(
-                start_client(dispatcher, output, qos=0, setting=setting),
+                start_client(
+                    http3sender.publish_can_data_structured,
+                    output=output,
+                    qos=0,
+                    setting=setting,
+                ),
                 timeout=config["client_settings"]["duration"],
             )
 

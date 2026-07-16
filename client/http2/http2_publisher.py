@@ -58,7 +58,9 @@ class HTTPSender:
         try:
             return_codes.append("SUBMITTED")
             resp = await self.client.post(
-                f"{url}/{message_name}/{signal_name}", data=payload_bytes, timeout=self.config["client_settings"].get("timeout")
+                f"{url}/{message_name}/{signal_name}",
+                data=payload_bytes,
+                timeout=self.config["client_settings"].get("timeout"),
             )
             if resp.status_code == 200:
                 return_codes.append("SUCCESSFUL")
@@ -69,3 +71,9 @@ class HTTPSender:
             pass
 
         return return_codes
+
+    async def shutdown(self):
+        try:
+            await self.client.aclose()
+        except Exception as e:
+            print(f"Problem while closing http2 client: {e}")
