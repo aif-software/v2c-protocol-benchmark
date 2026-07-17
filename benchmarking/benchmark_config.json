@@ -23,7 +23,7 @@
     "iperf_port": 30687,
     "clock_offset_address": "http://86.50.231.169:30685/sync",
     "topic": "toyota",
-    "window": 100,
+    "window": 1,
     "workers": 100,
     "queue_maxsize": 1000000,
     "duration": 10,

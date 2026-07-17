@@ -196,7 +196,7 @@ class Dispatcher:
 
     async def _worker(self):
         """
-        Single worker loop for both protocols. The only thing that differs
+        Single worker loop for all protocols. The only thing that differs
         between them is whether an item is gated by our own semaphore/
         in_flight counter (plain sends) or fired off unbounded because the
         underlying transport already manages its own concurrency (CoAP).

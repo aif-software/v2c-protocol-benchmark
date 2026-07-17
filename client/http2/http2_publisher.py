@@ -28,7 +28,7 @@ class HTTPSender:
         signal_name: str,
         data: dict,
         timestamp: float,
-        unit: str = None,
+        unit: str = "",
         qos: int = 0,
         latency_metrics=None,
     ):

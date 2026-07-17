@@ -101,14 +101,9 @@ async def handle_message(msg, can_received_time, dispatcher, qos):
         return
     ts = msg.get("timestamp", time.time())
     raw = msg.get("data", {})
+
     # can_received_time = msg.get("can_received_time")
     can_received_time = time_ns()
-
-    """
-    name = msg.get("name", "Unknown")
-    ts = msg.get("timestamp", time.time())
-    raw = msg.get("data", {})
-    """
 
     pre_decode_time = time_ns()
 

@@ -42,6 +42,7 @@ class COAPSender:
             print("Initializing transport tuning...")
             self.transport_tuning = TransportTuning()
             self.transport_tuning.MAX_LATENCY = 20.0
+            self.transport_tuning.NSTART = int(self.config["client_settings"]["window"])
         except Exception as e:
             print(f"Failed to initialize CoAP context: {e}")
 
@@ -117,7 +118,7 @@ class COAPSender:
                 return_codes.append("UNKNOWN")
 
         else:
-            response = self.coap_context.request(request)  # fire-and-forget / NON
+            response = await self.coap_context.request(request)  # fire-and-forget / NON
         return return_codes
 
     async def shutdown(self):
