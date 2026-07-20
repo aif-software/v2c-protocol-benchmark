@@ -186,7 +186,7 @@ def summarize_local_pub(path):
                 values.append(float(value))
 
     with open(path, "a", encoding="utf-8") as f:
-        f.write("protocol_e2e_latency\n")
+        f.write("local_publishing_time\n")
         f.write(f"Samples: {len(values)}\n")
 
         avg = statistics.mean(values)
