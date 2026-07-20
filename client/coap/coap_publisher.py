@@ -118,7 +118,7 @@ class COAPSender:
                 return_codes.append("UNKNOWN")
 
         else:
-            response = await self.coap_context.request(request)  # fire-and-forget / NON
+            response = self.coap_context.request(request)  # fire-and-forget / NON
         return return_codes
 
     async def shutdown(self):
