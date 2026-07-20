@@ -56,7 +56,7 @@ async def start_client(callback, output, qos, coap_context=None, setting="simula
         elif setting == "can":
             db, bus = can_reader.init_can_connection()
             while True:
-                msg = can_reader.read(db=db, bus=bus)
+                msg = await asyncio.to_thread(can_reader.read, db=db, bus=bus)
                 if msg is None:
                     continue
                 await handle_message(
