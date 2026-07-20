@@ -319,11 +319,6 @@ def calculate_latency_chunked(
                 print("query:", query)
                 result = query_api.query(org=org, query=query)
 
-                if not result:
-                    print("No results from influxdb. waiting for 15s...")
-                    _time.sleep(15)
-                    continue
-
                 # CSV append
                 write_raw_csv(
                     raw_output_file,
