@@ -8,3 +8,4 @@ raw_benchmarking
 certs
 data/candump.*
 client_data.txt
+logs
