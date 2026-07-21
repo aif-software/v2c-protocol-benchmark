@@ -319,6 +319,10 @@ def calculate_latency_chunked(
                 print("query:", query)
                 result = query_api.query(org=org, query=query)
 
+                # combine all delta values for summary
+                offset_index = OffsetIndex.parse_offset_csv(offset_csv)
+                combine_deltas(combined, result, offset_index)
+
                 # CSV append
                 write_raw_csv(
                     raw_output_file,
@@ -327,10 +331,6 @@ def calculate_latency_chunked(
                     write_header=not header_written,
                 )
                 header_written = True
-
-                # combine all delta values for summary
-                offset_index = OffsetIndex.parse_offset_csv(offset_csv)
-                combine_deltas(combined, result, offset_index)
 
                 if sleep_between_seconds:
                     _time.sleep(sleep_between_seconds)
